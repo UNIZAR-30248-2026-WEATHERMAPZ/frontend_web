@@ -7,7 +7,7 @@ import { RouteSearchPanel } from '../features/route-search/RouteSearchPanel.jsx'
 import { useDeviceLocation } from '../features/route-search/useDeviceLocation.js';
 import { useRoutePoints } from '../features/route-search/useRoutePoints.js';
 
-export function App() {
+export function App({ headerActions = null }) {
   const routePoints = useRoutePoints();
   const fastestRoute = useFastestRoute();
   const geolocation = useDeviceLocation({
@@ -26,6 +26,7 @@ export function App() {
 
   return (
     <AppShell
+      headerActions={headerActions}
       map={
         <MapView
           activePoint={routePoints.activePoint}

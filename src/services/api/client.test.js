@@ -1,4 +1,4 @@
-import { apiRequest } from './client.js';
+import { apiRequest, setUnauthorizedHandler } from './client.js';
 
 describe('apiRequest', () => {
   const originalFetch = global.fetch;
@@ -37,6 +37,53 @@ describe('apiRequest', () => {
     expect(global.fetch).toHaveBeenCalledWith('/api/routes/fastest', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+    });
+  });
+
+  describe('authentication', () => {
+    afterEach(() => {
+      window.localStorage.clear();
+      setUnauthorizedHandler(null);
+    });
+
+    it('sends the stored session token', async () => {
+      window.localStorage.setItem('weathermapz.authToken', 'session-token');
+      global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({}) });
+
+      await apiRequest('/auth/me');
+
+      expect(global.fetch).toHaveBeenCalledWith('/api/auth/me', {
+        headers: { 'Content-Type': 'application/json', Authorization: 'Bearer session-token' },
+      });
+    });
+
+    it('exposes the status and the field errors returned by the backend', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { message: 'x', fields: { email: 'Correo no válido.' } } }),
+      });
+
+      await expect(
+        apiRequest('/auth/register', { errorMessages: { 400: 'Revisa los datos.' } })
+      ).rejects.toMatchObject({
+        message: 'Revisa los datos.',
+        status: 400,
+        fields: { email: 'Correo no válido.' },
+      });
+    });
+
+    it('notifies an expired session only when a token was sent', async () => {
+      const onUnauthorized = jest.fn();
+      setUnauthorizedHandler(onUnauthorized);
+      global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 401 });
+
+      await expect(apiRequest('/auth/login')).rejects.toMatchObject({ status: 401 });
+      expect(onUnauthorized).not.toHaveBeenCalled();
+
+      window.localStorage.setItem('weathermapz.authToken', 'expired-token');
+      await expect(apiRequest('/routes/fastest')).rejects.toMatchObject({ status: 401 });
+      expect(onUnauthorized).toHaveBeenCalledTimes(1);
     });
   });
 });

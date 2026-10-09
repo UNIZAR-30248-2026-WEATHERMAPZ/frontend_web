@@ -1,4 +1,4 @@
-export function AppShell({ map, sidebar }) {
+export function AppShell({ map, sidebar, headerActions = null }) {
   return (
     <main className="app-shell">
       <section className="map-region" aria-label="Mapa interactivo de Zaragoza">
@@ -13,6 +13,7 @@ export function AppShell({ map, sidebar }) {
             <h1>WeatherMapZ</h1>
             <p className="app-kicker">Rutas cómodas a pie por Zaragoza</p>
           </div>
+          {headerActions}
         </header>
         {sidebar}
       </aside>
