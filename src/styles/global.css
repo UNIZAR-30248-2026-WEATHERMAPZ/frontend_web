@@ -363,6 +363,9 @@ input:focus-visible {
 .all-profiles-list .profile-icon-sun,
 .route-profile-list .profile-icon-sun { color: #d48a12; }
 
+.all-profiles-list .profile-icon-wind,
+.route-profile-list .profile-icon-wind { color: #3a7ca5; }
+
 .all-profiles-list .profile-icon-fastest { color: #6b7b91; }
 
 .route-profile-tools button {
@@ -536,10 +539,12 @@ input:focus-visible {
 
 .route-profile-weight-shade .profile-icon { color: #2c8a5f; }
 .route-profile-weight-sun .profile-icon { color: #d48a12; }
+.route-profile-weight-wind .profile-icon { color: #3a7ca5; }
 
 .route-profile-weight input { width: 100%; }
 .route-profile-weight-shade input { accent-color: #2c8a5f; }
 .route-profile-weight-sun input { accent-color: #d48a12; }
+.route-profile-weight-wind input { accent-color: #3a7ca5; }
 .route-profile-weight-time .profile-icon { color: #536174; }
 .route-profile-weight-time input { accent-color: #536174; }
 .route-profile-weight-time input:disabled { opacity: 0.45; }

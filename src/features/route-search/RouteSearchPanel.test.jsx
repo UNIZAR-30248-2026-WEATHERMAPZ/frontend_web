@@ -302,6 +302,10 @@ describe('RouteSearchPanel', () => {
     expect(onSolarDateChange).toHaveBeenLastCalledWith('2026-06-22');
     expect(onSolarTimeChange).toHaveBeenLastCalledWith('15:30');
     expect(screen.getByRole('button', { name: 'Calcular ruta' })).toBeDisabled();
+
+    // A route that only weighs wind uses the current wind: no date or time to ask (PBI-8.2).
+    rerender(<RouteSearchPanel routeType="shaded" asksSolarDateTime={false} />);
+    expect(screen.queryByLabelText('Hora')).not.toBeInTheDocument();
   });
 
   it('shows geolocation states', () => {

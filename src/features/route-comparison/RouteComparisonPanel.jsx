@@ -13,10 +13,41 @@ const statusMessages = {
 // it. "No better alternative" is already readable from the disabled card.
 const REASON_ALWAYS_VISIBLE = ['insufficient_exposure_data', 'sun_below_horizon', 'sun_too_low'];
 
-const formatShade = (route) =>
-  route?.exposure?.status === 'available'
+// A route that only weighs wind has no shadows calculated (ADR-025): nothing to say about shade.
+const formatShade = (route) => {
+  if (route?.exposure?.reason === 'not_requested') return null;
+  return route?.exposure?.status === 'available'
     ? `${Math.round(route.exposure.shadePercentage)} % de sombra`
     : 'Sombra no disponible';
+};
+
+const formatWind = (route) =>
+  route?.windExposure?.status === 'available'
+    ? `${Math.round(route.windExposure.exposure)} % de exposición al viento`
+    : null;
+
+const routeFactors = (route) => [formatShade(route), formatWind(route)].filter(Boolean);
+
+function RouteFactors({ route }) {
+  return routeFactors(route).map((factor) => <span key={factor}>{factor}</span>);
+}
+
+function pointsChange(points, what) {
+  const rounded = Math.round(points);
+  return `${Math.abs(rounded)} puntos ${rounded >= 0 ? 'más' : 'menos'} de ${what}`;
+}
+
+// What the chosen route changes: shade, wind or both, whatever the weights compared.
+function changesSummary(comparison) {
+  const changes = [];
+  if (Number.isFinite(comparison.shadeImprovementPercentagePoints)) {
+    changes.push(pointsChange(comparison.shadeImprovementPercentagePoints, 'sombra'));
+  }
+  if (Number.isFinite(comparison.windChangePoints)) {
+    changes.push(pointsChange(comparison.windChangePoints, 'exposición al viento'));
+  }
+  return changes.join(' y ');
+}
 
 function RouteTimeAndDistance({ route }) {
   return (
@@ -59,7 +90,9 @@ export function RouteComparisonPanel({
         {!isExpanded && (
           <p className="comparison-collapsed-summary">
             <strong>{showsShadedRoute ? alternativeLabel : 'Más rápida'}</strong>
-            {` · ${formatRouteDuration(selectedRoute.duration)} · ${formatShade(selectedRoute)}`}
+            {[formatRouteDuration(selectedRoute.duration), ...routeFactors(selectedRoute)]
+              .map((part) => ` · ${part}`)
+              .join('')}
           </p>
         )}
         {onToggleExpanded && (
@@ -82,7 +115,7 @@ export function RouteComparisonPanel({
         >
           <strong>Más rápida</strong>
           <RouteTimeAndDistance route={comparison.fastest} />
-          <span>{formatShade(comparison.fastest)}</span>
+          <RouteFactors route={comparison.fastest} />
         </button>
         <button
           type="button"
@@ -95,7 +128,7 @@ export function RouteComparisonPanel({
           {hasShadedRoute ? (
             <>
               <RouteTimeAndDistance route={comparison.shaded} />
-              <span>{formatShade(comparison.shaded)}</span>
+              <RouteFactors route={comparison.shaded} />
             </>
           ) : (
             <span>Sin alternativa</span>
@@ -104,9 +137,8 @@ export function RouteComparisonPanel({
       </div>
       {comparison.status === 'selected' ? (
         <p className={resultClass}>
-          {alternativeLabel} añade {formatRouteDuration(comparison.additionalDurationSeconds)} y
-          tiene {Math.abs(Math.round(comparison.shadeImprovementPercentagePoints))} puntos{' '}
-          {comparison.shadeImprovementPercentagePoints >= 0 ? 'más' : 'menos'} de sombra.
+          {alternativeLabel} añade {formatRouteDuration(comparison.additionalDurationSeconds)}
+          {changesSummary(comparison) ? ` y tiene ${changesSummary(comparison)}` : ''}.
         </p>
       ) : (
         <p className={resultClass} role="status">

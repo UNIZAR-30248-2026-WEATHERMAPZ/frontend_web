@@ -17,13 +17,15 @@ function isValidProfile(profile) {
     typeof profile.name === 'string' &&
     isWeight(profile.weights?.shade) &&
     isWeight(profile.weights?.sun) &&
+    (profile.weights.wind === undefined || isWeight(profile.weights.wind)) &&
     isDetour(profile.maxDetourPercentage)
   );
 }
 
+// A backend older than PBI-8.2 sends no wind weight: it counts as 0.
 function checkedProfile(profile) {
   if (!isValidProfile(profile)) throw new Error(INVALID_RESPONSE_MESSAGE);
-  return profile;
+  return { ...profile, weights: { wind: 0, ...profile.weights } };
 }
 
 // The backend repeats the message of a 409 (name or maximum reached) in the error itself.

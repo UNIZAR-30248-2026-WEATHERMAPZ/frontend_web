@@ -134,6 +134,17 @@ solo en el backend.
 - La papelera pide confirmación en otro pop-up y solo borra de tu cuenta; siempre queda al menos una
   ruta.
 
+## Comprobaciones de la PBI-8.2 (viento en las rutas)
+
+- El pop-up de una ruta tiene una tercera barra, "Evitar viento" (0 a 100 %), con su icono. Las rutas
+  guardadas antes tienen el viento a 0; la tarjeta de una ruta con viento muestra "Evitar viento N %".
+- Con sombra, sol y viento a 0 la barra de tiempo extra se desactiva; con solo viento se compara con
+  la ruta rápida, pero no se piden fecha y hora: se usa el viento actual de Open-Meteo.
+- Las tarjetas de la comparación muestran el "% de exposición al viento" de cada ruta. En una ruta
+  solo con viento no aparece la sombra (no se calcula) y funciona también de noche.
+- Con una ruta elegida, el resumen dice cuánto cambian la sombra y la exposición al viento.
+- Con viento flojo (menos de 10 km/h) la exposición es 0 y la ruta elegida es la rápida.
+
 ## Comprobaciones de Iniciar ruta
 
 - Tras calcular una ruta, "Iniciar ruta" pide la ubicación y sustituye el buscador por la indicación.

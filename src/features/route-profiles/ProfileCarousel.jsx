@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 
 import { ProfileIcon, ProfileIcons } from './ProfileIcon.jsx';
 
-const FACTOR_LABELS = { shade: 'Sombra', sun: 'Sol' };
+const FACTOR_LABELS = { shade: 'Sombra', sun: 'Sol', wind: 'Evitar viento' };
 
 // One line per factor that counts, so a new factor (wind) is one more line, not a longer one.
 export function weightsSummary({ weights, maxDetourPercentage }) {

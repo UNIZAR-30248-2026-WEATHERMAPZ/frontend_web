@@ -6,15 +6,17 @@ const MAX_NAME_LENGTH = 40;
 const WEIGHT_FIELDS = [
   { key: 'shade', label: 'Sombra', icon: 'shade' },
   { key: 'sun', label: 'Sol', icon: 'sun' },
+  { key: 'wind', label: 'Evitar viento', icon: 'wind' },
 ];
 // The same limit as the backend (ADR-023).
 const MAX_DETOUR_PERCENTAGE = 40;
 
 export function RouteProfileEditor({ profile = null, onSave, onCancel }) {
   const [name, setName] = useState(profile?.name ?? '');
-  const [weights, setWeights] = useState(profile?.weights ?? { shade: 50, sun: 0 });
+  // Routes saved before PBI-8.2 come without wind: it counts as 0.
+  const [weights, setWeights] = useState({ shade: 50, sun: 0, wind: 0, ...profile?.weights });
   const [maxDetour, setMaxDetour] = useState(profile?.maxDetourPercentage ?? 25);
-  const onlyTime = weights.shade === 0 && weights.sun === 0;
+  const onlyTime = weights.shade === 0 && weights.sun === 0 && weights.wind === 0;
   const [errors, setErrors] = useState({});
   const [isSaving, setIsSaving] = useState(false);
 
@@ -95,7 +97,7 @@ export function RouteProfileEditor({ profile = null, onSave, onCancel }) {
         />
         <small id="route-profile-detour-help" className="route-profile-help">
           {onlyTime
-            ? 'Con sombra y sol a 0 % es la ruta más rápida: no hay rodeo.'
+            ? 'Con sombra, sol y viento a 0 % es la ruta más rápida: no hay rodeo.'
             : `Cuánto más puede tardar que la ruta más rápida: con +${maxDetour} %, un paseo de 20 min puede durar hasta ${Math.floor(20 * (1 + maxDetour / 100))} min.`}
         </small>
         {errors.maxDetourPercentage && (

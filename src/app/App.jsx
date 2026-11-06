@@ -8,6 +8,7 @@ import { RouteComparisonPanel } from '../features/route-comparison/RouteComparis
 import { RouteProfilePicker } from '../features/route-profiles/RouteProfilePicker.jsx';
 import {
   hasEnvironmentalWeight,
+  hasShadeWeight,
   useRouteProfiles,
 } from '../features/route-profiles/useRouteProfiles.js';
 import { NavigationPanel } from '../features/routing/NavigationPanel.jsx';
@@ -155,6 +156,7 @@ export function App({ userMenu = null }) {
               onStartNavigation={navigation.start}
               navigationError={navigation.errorMessage}
               routeType={routeType}
+              asksSolarDateTime={routeType === 'shaded' && hasShadeWeight(profile.weights)}
               alternativeLabel={alternativeLabel}
               profilePicker={
                 <RouteProfilePicker

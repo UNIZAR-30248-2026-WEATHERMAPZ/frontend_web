@@ -55,7 +55,7 @@ describe('RouteProfilePicker', () => {
 
     expect(onSave).toHaveBeenCalledWith(2, {
       name: 'Mucha sombra',
-      weights: { shade: 50, sun: 0 },
+      weights: { shade: 50, sun: 0, wind: 0 },
       maxDetourPercentage: 25,
     });
     expect(onSelect).toHaveBeenCalledWith(2);
@@ -76,7 +76,37 @@ describe('RouteProfilePicker', () => {
 
     expect(onSave).toHaveBeenCalledWith(null, {
       name: 'Invierno',
-      weights: { shade: 50, sun: expect.any(Number) },
+      weights: { shade: 50, sun: expect.any(Number), wind: 0 },
+      maxDetourPercentage: 25,
+    });
+  });
+
+  it('shows and edits the wind weight of a route (PBI-8.2)', async () => {
+    const user = userEvent.setup();
+    const cierzo = {
+      id: 3,
+      name: 'Cierzo',
+      presetKey: null,
+      weights: { shade: 0, sun: 0, wind: 70 },
+      maxDetourPercentage: 25,
+    };
+    const { onSave } = renderPicker({ profiles: [...profiles, cierzo], selectedId: 3 });
+    onSave.mockResolvedValue(cierzo);
+
+    expect(screen.getByText('Evitar viento 70 %')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Editar Cierzo' }));
+    const wind = screen.getByRole('slider', { name: 'Evitar viento' });
+    expect(wind).toHaveValue('70');
+    fireEvent.change(wind, { target: { value: '0' } });
+    expect(
+      screen.getByText('Con sombra, sol y viento a 0 % es la ruta más rápida: no hay rodeo.')
+    ).toBeInTheDocument();
+    fireEvent.change(wind, { target: { value: '90' } });
+    await user.click(screen.getByRole('button', { name: 'Guardar' }));
+
+    expect(onSave).toHaveBeenCalledWith(3, {
+      name: 'Cierzo',
+      weights: { shade: 0, sun: 0, wind: 90 },
       maxDetourPercentage: 25,
     });
   });

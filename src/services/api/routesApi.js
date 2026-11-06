@@ -64,8 +64,25 @@ function isValidExposure(exposure) {
   );
 }
 
+// Wind exposure of the route (PBI-8.2), 0-100. The Shaded Route of PBI-5.4 does not send it.
+function isValidWindExposure(windExposure) {
+  if (windExposure === undefined || windExposure?.status === 'unavailable') {
+    return windExposure === undefined || windExposure.exposure === null;
+  }
+  return (
+    windExposure?.status === 'available' &&
+    Number.isFinite(windExposure.exposure) &&
+    windExposure.exposure >= 0 &&
+    windExposure.exposure <= 100
+  );
+}
+
 function isValidEnvironmentalRoute(route) {
-  return isValidRoute(route) && isValidExposure(route.exposure);
+  return (
+    isValidRoute(route) &&
+    isValidExposure(route.exposure) &&
+    isValidWindExposure(route.windExposure)
+  );
 }
 
 function isValidComparison(comparison) {
@@ -105,6 +122,7 @@ export async function getWeightedRouteComparison(
     ...data.comparison,
     shaded: data.comparison.selected ?? null,
     shadeImprovementPercentagePoints: data.comparison.shadeChangePercentagePoints ?? null,
+    windChangePoints: data.comparison.windChangePoints ?? null,
   };
 
   if (!isValidComparison(comparison)) {

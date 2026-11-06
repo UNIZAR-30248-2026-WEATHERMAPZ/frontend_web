@@ -14,6 +14,8 @@ const PATHS = {
       <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
     </>
   ),
+  // Gusts: wind.
+  wind: <path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h8a2.5 2.5 0 1 1-2.5 2.5" />,
   plus: <path d="M12 5v14M5 12h14" />,
   time: (
     <>
@@ -51,9 +53,13 @@ export function ProfileIcon({ kind }) {
   );
 }
 
-// What a route favours: shade, sun or both, and time if every weight is 0.
+// What a route favours: shade, sun, wind or several, and time if every weight is 0.
 export function ProfileIcons({ weights }) {
-  const kinds = [weights.shade > 0 && 'shade', weights.sun > 0 && 'sun'].filter(Boolean);
+  const kinds = [
+    weights.shade > 0 && 'shade',
+    weights.sun > 0 && 'sun',
+    weights.wind > 0 && 'wind',
+  ].filter(Boolean);
   return (
     <span className="profile-icons">
       {(kinds.length ? kinds : ['fastest']).map((kind) => (

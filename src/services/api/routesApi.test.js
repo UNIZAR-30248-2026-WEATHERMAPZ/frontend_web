@@ -102,6 +102,7 @@ describe('getFastestRoute', () => {
       // The chosen route takes the place of the shaded one in the app.
       shaded: environmentalRoute,
       shadeImprovementPercentagePoints: 40,
+      windChangePoints: null,
     });
     expect(global.fetch.mock.calls[0][0]).toMatch(/\/routes\/weighted$/);
     expect(JSON.parse(global.fetch.mock.calls[0][1].body)).toEqual({
@@ -112,6 +113,44 @@ describe('getFastestRoute', () => {
       timeZone: 'Europe/Madrid',
       weights: { shade: 50, sun: 0 },
     });
+  });
+
+  it('accepts the wind exposure of each route and rejects an impossible one (PBI-8.2)', async () => {
+    const windyRoute = (exposure) => ({
+      ...route,
+      exposure: { status: 'unavailable', shadePercentage: null, sunPercentage: null },
+      windExposure: { status: 'available', exposure },
+    });
+    const reply = (fastest) => ({
+      ok: true,
+      json: async () => ({
+        comparison: {
+          status: 'selected',
+          fastest,
+          selected: windyRoute(30),
+          additionalDurationSeconds: 60,
+          shadeChangePercentagePoints: null,
+          windChangePoints: -60,
+        },
+      }),
+    });
+    const request = {
+      origin,
+      destination,
+      date: '2026-11-06',
+      time: '23:00',
+      weights: { shade: 0, sun: 0, wind: 100 },
+    };
+    global.fetch = jest
+      .fn()
+      .mockResolvedValueOnce(reply(windyRoute(90)))
+      .mockResolvedValueOnce(reply(windyRoute(140)));
+
+    await expect(getWeightedRouteComparison(request)).resolves.toMatchObject({
+      shaded: { windExposure: { exposure: 30 } },
+      windChangePoints: -60,
+    });
+    await expect(getWeightedRouteComparison(request)).rejects.toThrow('comparación no válida');
   });
 
   it('rejects invented or out-of-range shaded metrics', async () => {

@@ -8,6 +8,71 @@ const route = (duration, shadePercentage) => ({
   exposure: { status: 'available', shadePercentage, sunPercentage: 100 - shadePercentage },
 });
 
+const windy = (duration, exposure, shadePercentage = null) => ({
+  duration,
+  exposure:
+    shadePercentage === null
+      ? {
+          status: 'unavailable',
+          reason: 'not_requested',
+          shadePercentage: null,
+          sunPercentage: null,
+        }
+      : route(duration, shadePercentage).exposure,
+  windExposure: { status: 'available', exposure },
+});
+
+describe('RouteComparisonPanel with wind (PBI-8.2)', () => {
+  it('shows the wind exposure and, in a wind-only route, no shade', () => {
+    render(
+      <RouteComparisonPanel
+        comparison={{
+          status: 'selected',
+          fastest: windy(900, 92),
+          shaded: windy(1020, 38),
+          additionalDurationSeconds: 120,
+          shadeImprovementPercentagePoints: null,
+          windChangePoints: -54,
+        }}
+        selectedRouteType="shaded"
+        alternativeLabel="Cierzo"
+        onSelectRoute={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText('92 % de exposición al viento')).toBeInTheDocument();
+    expect(screen.getByText('38 % de exposición al viento')).toBeInTheDocument();
+    expect(screen.queryByText(/sombra/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Cierzo añade 2 min y tiene 54 puntos menos de exposición al viento.')
+    ).toBeInTheDocument();
+  });
+
+  it('sums up shade and wind when both count', () => {
+    render(
+      <RouteComparisonPanel
+        comparison={{
+          status: 'selected',
+          fastest: windy(900, 60, 20),
+          shaded: windy(1020, 40, 70),
+          additionalDurationSeconds: 120,
+          shadeImprovementPercentagePoints: 50,
+          windChangePoints: -20,
+        }}
+        selectedRouteType="shaded"
+        onSelectRoute={jest.fn()}
+      />
+    );
+
+    expect(screen.getByRole('button', { name: /Con sombra/ })).toHaveTextContent(
+      '70 % de sombra40 % de exposición al viento'
+    );
+    expect(
+      screen.getByText(/50 puntos más de sombra y 20 puntos menos de exposición al viento/)
+    ).toBeInTheDocument();
+  });
+});
+
 describe('RouteComparisonPanel', () => {
   it('compares both routes and lets the user alternate between them', async () => {
     const user = userEvent.setup();
