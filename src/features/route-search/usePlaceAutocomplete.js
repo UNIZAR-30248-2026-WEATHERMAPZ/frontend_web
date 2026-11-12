@@ -1,13 +1,20 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import { autocompletePlaces } from '../../services/api/geocodingApi.js';
 
 const EMPTY = { errorMessage: '', isLoading: false, results: [] };
 
-export function usePlaceAutocomplete(query, enabled = true, field = '') {
+// `onSettled(results)` is called when a search ends (with [] if it failed), so that the field can act on
+// suggestions that arrive after the user pressed Enter.
+export function usePlaceAutocomplete(query, enabled = true, field = '', onSettled = null) {
   const text = query.trim();
   const key = enabled && text.length >= 3 ? `${field}:${text}` : '';
   const [state, setState] = useState({ ...EMPTY, key: '' });
+  const onSettledRef = useRef(onSettled);
+
+  useEffect(() => {
+    onSettledRef.current = onSettled;
+  });
 
   useEffect(() => {
     if (!key) return undefined;
@@ -18,8 +25,12 @@ export function usePlaceAutocomplete(query, enabled = true, field = '') {
       requestTimeout = window.setTimeout(() => controller.abort(), 12000);
       try {
         const data = await autocompletePlaces(text, { signal: controller.signal });
-        if (current) setState({ ...EMPTY, key, results: data.results });
+        if (current) {
+          setState({ ...EMPTY, key, results: data.results });
+          onSettledRef.current?.(data.results);
+        }
       } catch (error) {
+        if (current) onSettledRef.current?.([]);
         if (current)
           setState({
             ...EMPTY,

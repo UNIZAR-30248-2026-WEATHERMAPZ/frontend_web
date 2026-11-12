@@ -366,6 +366,9 @@ input:focus-visible {
 .all-profiles-list .profile-icon-wind,
 .route-profile-list .profile-icon-wind { color: #3a7ca5; }
 
+.all-profiles-list .profile-icon-vegetation,
+.route-profile-list .profile-icon-vegetation { color: #5a9a2e; }
+
 .all-profiles-list .profile-icon-fastest { color: #6b7b91; }
 
 .route-profile-tools button {
@@ -401,7 +404,8 @@ input:focus-visible {
 
 .route-profile-list {
   display: grid;
-  grid-auto-columns: minmax(6.2rem, 1fr);
+  /* Wide enough for the longest fixed name, "Recomendada" (PBI-9.1), without cutting it. */
+  grid-auto-columns: minmax(7rem, 1fr);
   grid-auto-flow: column;
   gap: 0.4rem;
   overflow-x: auto;
@@ -545,7 +549,81 @@ input:focus-visible {
 .route-profile-weight-shade input { accent-color: #2c8a5f; }
 .route-profile-weight-sun input { accent-color: #d48a12; }
 .route-profile-weight-wind input { accent-color: #3a7ca5; }
+.route-profile-weight-vegetation .profile-icon { color: #5a9a2e; }
+.route-profile-weight-vegetation input { accent-color: #5a9a2e; }
 .route-profile-weight-time .profile-icon { color: #536174; }
+
+/* One bar for shade and sun (ADR-030): shade to the left, neutral in the middle, sun to the right. */
+.route-profile-weight-shade-sun .profile-icon { color: #2c8a5f; }
+
+.shade-sun-ends {
+  display: flex;
+  justify-content: space-between;
+  color: #536174;
+  font-size: 0.76rem;
+  font-weight: 650;
+}
+
+.route-profile-weight .shade-sun-ends span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-weight: 650;
+}
+
+.shade-sun-ends .profile-icon-shade { color: #2c8a5f; }
+.shade-sun-ends .profile-icon-sun { color: #d48a12; }
+
+.route-profile-weight-shade-sun .shade-sun-range {
+  /* Own track: the browser fill from the left would suggest shade when sun is chosen. */
+  width: 100%;
+  min-height: 2rem;
+  margin: 0;
+  border-radius: 0.6rem;
+  background: linear-gradient(#8794a6, #8794a6) center / 2px 1rem no-repeat;
+  cursor: pointer;
+  appearance: none;
+}
+
+.shade-sun-range::-webkit-slider-runnable-track {
+  height: 0.45rem;
+  border-radius: 999px;
+  background: linear-gradient(to right, #b9dfcb, #e3e8ee 50%, #f3d9a8);
+}
+
+.shade-sun-range::-moz-range-track {
+  height: 0.45rem;
+  border-radius: 999px;
+  background: linear-gradient(to right, #b9dfcb, #e3e8ee 50%, #f3d9a8);
+}
+
+.shade-sun-range::-webkit-slider-thumb {
+  width: 1.3rem;
+  height: 1.3rem;
+  margin-top: -0.425rem;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: var(--shade-sun-thumb, #536174);
+  box-shadow: 0 1px 4px rgba(28, 42, 63, 0.35);
+  appearance: none;
+}
+
+.shade-sun-range::-moz-range-thumb {
+  width: 1.3rem;
+  height: 1.3rem;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: var(--shade-sun-thumb, #536174);
+  box-shadow: 0 1px 4px rgba(28, 42, 63, 0.35);
+}
+
+.shade-sun-range.is-shade { --shade-sun-thumb: #2c8a5f; }
+.shade-sun-range.is-sun { --shade-sun-thumb: #d48a12; }
+
+.shade-sun-range:focus-visible {
+  outline: 3px solid #b9dfcb;
+  outline-offset: 2px;
+}
 .route-profile-weight-time input { accent-color: #536174; }
 .route-profile-weight-time input:disabled { opacity: 0.45; }
 
@@ -559,6 +637,43 @@ input:focus-visible {
   margin: 0;
   color: #a2441f;
   font-size: 0.76rem;
+}
+
+/* A route name that another route already has (#165): replace it or change the name. */
+.name-conflict-live:empty { display: none; }
+
+.name-conflict-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.name-conflict-actions button {
+  min-height: 2.4rem;
+  border-radius: 0.7rem;
+  padding: 0 0.9rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.name-conflict-actions .profile-dialog-danger {
+  border: 0;
+  color: #ffffff;
+}
+
+.name-conflict-confirm {
+  display: grid;
+  gap: 0.5rem;
+  border: 1px solid #efc9b8;
+  border-radius: 0.7rem;
+  padding: 0.65rem 0.75rem;
+  background: #fff6f1;
+}
+
+.name-conflict-confirm p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.85rem;
 }
 
 .profile-dialog-actions {
@@ -1366,6 +1481,114 @@ input:focus-visible {
   gap: 0.5rem;
 }
 
+/* Why the recommended route (PBI-9.1): criterion, reason, weights and weather used. */
+.recommendation-card {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 0.45rem;
+  border-top: 1px solid #dfe9e4;
+  padding-top: 0.65rem;
+}
+
+.recommendation-card h2 {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  color: #35445a;
+  font-size: 0.82rem;
+}
+
+.recommendation-card h2 .profile-icon { color: #c2571a; }
+
+.recommendation-reason {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.recommendation-details {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.recommendation-weights {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.recommendation-weight {
+  display: grid;
+  grid-template-columns: auto minmax(5.5rem, auto) minmax(0, 1fr) 3.2rem;
+  align-items: center;
+  gap: 0.4rem;
+  color: #35445a;
+  font-size: 0.76rem;
+}
+
+.recommendation-weight meter {
+  width: 100%;
+  height: 0.55rem;
+}
+
+.recommendation-weight-value {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+/* The time row has no bar: its value takes the space of the bar and the number. */
+.recommendation-weight-time .recommendation-weight-value { grid-column: 3 / -1; }
+
+.recommendation-weight-wind .profile-icon { color: #3a7ca5; }
+.recommendation-weight-time .profile-icon { color: #536174; }
+.recommendation-weight-shade-sun .profile-icon { color: #2c8a5f; }
+
+/* Read-only shade-sun scale: filled from the centre towards shade (left) or sun (right). */
+.shade-sun-scale {
+  position: relative;
+  height: 0.55rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e3e8ee;
+}
+
+.shade-sun-scale::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(50% - 1px);
+  width: 2px;
+  background: #8794a6;
+  content: '';
+}
+
+.shade-sun-scale-fill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: #2c8a5f;
+}
+
+.shade-sun-scale.is-sun .shade-sun-scale-fill { background: #d48a12; }
+.recommendation-weight-wind meter { accent-color: #3a7ca5; }
+.recommendation-weight-vegetation .profile-icon { color: #5a9a2e; }
+.recommendation-weight-vegetation meter { accent-color: #5a9a2e; }
+
+.recommendation-weather,
+.recommendation-attribution {
+  margin: 0;
+  color: #627268;
+  font-size: 0.74rem;
+  line-height: 1.4;
+}
+
+.recommendation-attribution { font-size: 0.68rem; }
+
 /* Only small screens can collapse the comparison. */
 .comparison-toggle,
 .comparison-collapsed-summary { display: none; }
@@ -1807,6 +2030,17 @@ input:focus-visible {
     font-weight: 750;
     cursor: pointer;
   }
+
+  .route-actions .recommendation-card {
+    gap: 0.3rem;
+    border-top: 0;
+    padding-top: 0;
+  }
+
+  /* Plegada con la comparación: solo el criterio y el motivo. Con "Ver más", pesos y tiempo. */
+  .recommendation-card.is-collapsed .recommendation-details { display: none; }
+
+  .route-actions:has(.route-steps.is-open) .recommendation-card { display: none; }
 
   /* Comparación plegada: una línea con la ruta elegida. Para cambiar de ruta, "Ver más". */
   .route-comparison.is-collapsed .comparison-routes,
@@ -2490,7 +2724,8 @@ input:focus-visible {
 
 /* Pantallas muy bajas (móvil en horizontal): el panel abierto y la comparación no caben a la vez. */
 @media (max-width: 56.24rem) and (max-height: 30rem) {
-  .route-search-panel:not(.is-collapsed) .route-comparison { display: none; }
+  .route-search-panel:not(.is-collapsed) .route-comparison,
+  .route-search-panel:not(.is-collapsed) .recommendation-card { display: none; }
 
   .control-panel:has(.route-search-panel:not(.is-collapsed)) {
     max-height: calc(100dvh - var(--route-sheet-height, 6.5rem) - 1.75rem);
@@ -2575,4 +2810,45 @@ input:focus-visible {
   .solar-date-time input,
   .route-profile-name input,
   .all-profiles-search input { font-size: 16px; }
+}
+
+/* Touch targets of at least 44×44 px on small screens (WCAG 2.5.5), checked at 390 and 320 px with
+   the recommended route (PBI-9.1). Last in the file so it wins over the earlier mobile rules. */
+@media (max-width: 56.24rem) {
+  .mobile-panel-toggle,
+  .comparison-toggle,
+  .route-steps-header button,
+  .route-actions .clear-selection-button,
+  .route-actions .route-submit,
+  .point-input-shell input,
+  .all-profiles-search input { min-height: 2.75rem; }
+
+  .input-icon-button {
+    width: 2.75rem;
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+  }
+
+  .route-profile-tools button {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .route-profile-weight input[type='range'] { min-height: 2.75rem; }
+
+  .route-profile-name input,
+  .profile-dialog-actions button,
+  .name-conflict-actions button { min-height: 2.75rem; }
+
+  .route-profiles-all {
+    min-height: 2.75rem;
+    padding: 0 0.35rem;
+    white-space: nowrap;
+  }
+}
+
+/* At 320 px the header does not fit with 44 px buttons: the visual title goes (the fieldset keeps
+   its accessible legend, "Tipo de ruta"). */
+@media (max-width: 22rem) {
+  .route-profiles-title { display: none; }
 }

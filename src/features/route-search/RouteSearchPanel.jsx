@@ -50,14 +50,15 @@ function PointInput({
   const [highlight, setHighlight] = useState(-1);
   const inputRef = useRef(null);
   const closeTimer = useRef(null);
+  // Enter pressed while the suggestions were still loading: the first one is chosen when they come.
+  const enterPending = useRef(false);
   const open = focused && !dismissed && activePoint === name && !point && value.trim().length >= 3;
-  const search = usePlaceAutocomplete(value, open, name);
   const listId = `${name}-suggestions`;
-  const selectedIndex = highlight < search.results.length ? highlight : -1;
 
   useEffect(() => () => window.clearTimeout(closeTimer.current), []);
 
   function choose(result) {
+    enterPending.current = false;
     setDismissed(true);
     setHighlight(-1);
     // Before setting the point: on leaving the field a phone keyboard commits the text it was still
@@ -66,8 +67,17 @@ function PointInput({
     onSetPoint(name, { lat: result.lat, lng: result.lng, label: result.label, source: 'search' });
   }
 
+  const search = usePlaceAutocomplete(value, open, name, (results) => {
+    if (!enterPending.current) return;
+    enterPending.current = false;
+    // With none, the list keeps its "not found" message.
+    if (results.length) choose(results[0]);
+  });
+  const selectedIndex = highlight < search.results.length ? highlight : -1;
+
   function handleKey(event) {
     if (event.key === 'Escape') {
+      enterPending.current = false;
       setDismissed(true);
       setHighlight(-1);
       return;
@@ -83,9 +93,13 @@ function PointInput({
         );
       }
     }
-    if (event.key === 'Enter' && open && selectedIndex >= 0) {
+    if (event.key === 'Enter' && open) {
       event.preventDefault();
-      choose(search.results[selectedIndex]);
+      // The highlighted suggestion or, without one, the first. If they are still loading, it waits
+      // for them; with none, the list keeps its "not found" message.
+      if (selectedIndex >= 0) choose(search.results[selectedIndex]);
+      else if (search.results.length) choose(search.results[0]);
+      else if (search.isLoading) enterPending.current = true;
     }
   }
 
@@ -136,11 +150,15 @@ function PointInput({
               onActivate(name);
             }}
             onBlur={() => {
+              // Leaving the field cancels an Enter still waiting for its suggestions.
+              enterPending.current = false;
               window.clearTimeout(closeTimer.current);
               closeTimer.current = window.setTimeout(() => setFocused(false), LIST_CLOSE_DELAY_MS);
               setHighlight(-1);
             }}
             onChange={(event) => {
+              // Another text: an earlier Enter no longer applies.
+              enterPending.current = false;
               setDismissed(false);
               setHighlight(-1);
               onEditPoint(name, event.target.value);
@@ -422,6 +440,7 @@ export function RouteSearchPanel({
               distance={displayedRoute.distance}
               duration={displayedRoute.duration}
               shadePercentage={displayedRoute.exposure?.shadePercentage}
+              greenPercentage={displayedRoute.vegetation?.greenPercentage}
               title={showsAlternative ? alternativeLabel : 'Ruta rápida'}
             />
           )}

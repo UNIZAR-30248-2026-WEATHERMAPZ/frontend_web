@@ -35,3 +35,16 @@ describe('RouteSummary', () => {
     expect(screen.getByText('74 %')).toBeInTheDocument();
   });
 });
+
+describe('RouteSummary with the green (PBI-10 phase B)', () => {
+  test('muestra el porcentaje verde de la ruta cuando se ha calculado', () => {
+    const { rerender } = render(
+      <RouteSummary distance={1200} duration={900} greenPercentage={71.6} />
+    );
+
+    expect(screen.getByText('Verde').nextSibling).toHaveTextContent('72 %');
+
+    rerender(<RouteSummary distance={1200} duration={900} />);
+    expect(screen.queryByText('Verde')).not.toBeInTheDocument();
+  });
+});

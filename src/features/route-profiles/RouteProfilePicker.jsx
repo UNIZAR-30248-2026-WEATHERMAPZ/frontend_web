@@ -19,10 +19,13 @@ export function RouteProfilePicker({
   onSelect,
   onSave,
   onDelete,
+  onReplace,
 }) {
   // null, 'all', 'new', 'edit' or 'delete'.
   const [dialog, setDialog] = useState(null);
   const [deleteError, setDeleteError] = useState('');
+  // A replacement that updated the existing route but could not delete the edited one (#165).
+  const [notice, setNotice] = useState('');
   const selected = profiles.find((profile) => profile.id === selectedId) ?? null;
   const closeDialog = () => setDialog(null);
 
@@ -30,6 +33,20 @@ export function RouteProfilePicker({
     const saved = await onSave(dialog === 'edit' ? selected.id : null, draft);
     setDialog(null);
     onSelect(saved.id);
+  }
+
+  async function replace(existingId, draft, editedId) {
+    setNotice('');
+    try {
+      const saved = await onReplace(existingId, draft, editedId);
+      setDialog(null);
+      onSelect(saved.id);
+    } catch (error) {
+      if (!error.saved) throw error;
+      setDialog(null);
+      onSelect(error.saved.id);
+      setNotice(error.message);
+    }
   }
 
   async function remove() {
@@ -64,7 +81,8 @@ export function RouteProfilePicker({
             >
               <ProfileIcon kind="plus" />
             </button>
-            {selected && (
+            {/* The recommended route is chosen by the backend: nothing to edit or delete. */}
+            {selected && !selected.readOnly && (
               <>
                 <button
                   type="button"
@@ -94,6 +112,11 @@ export function RouteProfilePicker({
         )}
       </div>
       <ProfileCarousel profiles={profiles} selectedId={selectedId} onSelect={onSelect} />
+      {notice && (
+        <p className="form-message form-message-error" role="alert">
+          {notice}
+        </p>
+      )}
       {loadFailed && (
         <p className="form-message" role="status">
           No se han podido cargar tus rutas: puedes usar las predefinidas, pero no cambiarlas.
@@ -114,7 +137,9 @@ export function RouteProfilePicker({
         >
           <RouteProfileEditor
             profile={dialog === 'edit' ? selected : null}
+            profiles={profiles.filter((profile) => !profile.readOnly)}
             onSave={save}
+            onReplace={onReplace ? replace : undefined}
             onCancel={closeDialog}
           />
         </ProfileDialog>

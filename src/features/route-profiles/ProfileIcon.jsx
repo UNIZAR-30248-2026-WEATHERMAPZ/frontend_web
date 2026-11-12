@@ -1,3 +1,5 @@
+import { shadeSunBalance } from './shadeSun.js';
+
 const PATHS = {
   // Lightning: only time matters.
   fastest: <path d="M13 2 4.5 13.5H11L10 22l8.5-11.5H12L13 2Z" />,
@@ -14,8 +16,22 @@ const PATHS = {
       <path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4" />
     </>
   ),
+  // Leaf: green, vegetation (PBI-10 phase B). The tree is shade.
+  vegetation: (
+    <>
+      <path d="M5 19c0-8 5-13 14-14-1 9-6 14-14 14Z" />
+      <path d="M5 19 13 11" />
+    </>
+  ),
   // Gusts: wind.
   wind: <path d="M3 8h11a3 3 0 1 0-3-3M3 12h16a3 3 0 1 1-3 3M3 16h8a2.5 2.5 0 1 1-2.5 2.5" />,
+  // Thermometer: the route chosen with the current weather (PBI-9.1).
+  recommended: (
+    <>
+      <path d="M10 14.5V5a2 2 0 1 1 4 0v9.5a4 4 0 1 1-4 0Z" />
+      <path d="M12 9v8" />
+    </>
+  ),
   plus: <path d="M12 5v14M5 12h14" />,
   time: (
     <>
@@ -53,12 +69,22 @@ export function ProfileIcon({ kind }) {
   );
 }
 
-// What a route favours: shade, sun, wind or several, and time if every weight is 0.
-export function ProfileIcons({ weights }) {
+// What a route favours: shade, sun, wind or several, and time if every weight is 0. A route with its
+// own icon (the recommended one) shows only that.
+export function ProfileIcons({ weights, icon = null }) {
+  if (icon) {
+    return (
+      <span className="profile-icons">
+        <ProfileIcon kind={icon} />
+      </span>
+    );
+  }
+  const balance = shadeSunBalance(weights);
   const kinds = [
-    weights.shade > 0 && 'shade',
-    weights.sun > 0 && 'sun',
+    balance < 0 && 'shade',
+    balance > 0 && 'sun',
     weights.wind > 0 && 'wind',
+    weights.vegetation > 0 && 'vegetation',
   ].filter(Boolean);
   return (
     <span className="profile-icons">

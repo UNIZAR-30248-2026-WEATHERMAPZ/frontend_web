@@ -7,6 +7,8 @@ const statusMessages = {
   sun_below_horizon: 'El Sol está bajo el horizonte en el momento seleccionado.',
   sun_too_low:
     'El Sol está demasiado bajo en el momento seleccionado para estimar la sombra. Prueba con una hora más central del día.',
+  // Only the recommended route (PBI-9.1) asks for the fastest one alone.
+  fastest_only: 'Con el tiempo actual, la ruta recomendada es la más rápida.',
 };
 
 // Without shade to compare, the reason must stay visible on small screens: the cards do not explain
@@ -14,8 +16,9 @@ const statusMessages = {
 const REASON_ALWAYS_VISIBLE = ['insufficient_exposure_data', 'sun_below_horizon', 'sun_too_low'];
 
 // A route that only weighs wind has no shadows calculated (ADR-025): nothing to say about shade.
+// The same when only the fastest route was asked for (a recommended route with every weight at 0).
 const formatShade = (route) => {
-  if (route?.exposure?.reason === 'not_requested') return null;
+  if (!route?.exposure || route.exposure.reason === 'not_requested') return null;
   return route?.exposure?.status === 'available'
     ? `${Math.round(route.exposure.shadePercentage)} % de sombra`
     : 'Sombra no disponible';
@@ -26,7 +29,14 @@ const formatWind = (route) =>
     ? `${Math.round(route.windExposure.exposure)} % de exposición al viento`
     : null;
 
-const routeFactors = (route) => [formatShade(route), formatWind(route)].filter(Boolean);
+// Only when it was calculated (shade, sun or green weigh; PBI-10 phase B).
+const formatGreen = (route) =>
+  route?.vegetation?.status === 'available'
+    ? `${Math.round(route.vegetation.greenPercentage)} % verde`
+    : null;
+
+const routeFactors = (route) =>
+  [formatShade(route), formatWind(route), formatGreen(route)].filter(Boolean);
 
 function RouteFactors({ route }) {
   return routeFactors(route).map((factor) => <span key={factor}>{factor}</span>);
@@ -45,6 +55,9 @@ function changesSummary(comparison) {
   }
   if (Number.isFinite(comparison.windChangePoints)) {
     changes.push(pointsChange(comparison.windChangePoints, 'exposición al viento'));
+  }
+  if (Number.isFinite(comparison.greenChangePercentagePoints)) {
+    changes.push(pointsChange(comparison.greenChangePercentagePoints, 'verde'));
   }
   return changes.join(' y ');
 }

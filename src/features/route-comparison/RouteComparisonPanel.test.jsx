@@ -268,3 +268,87 @@ describe('RouteComparisonPanel', () => {
     expect(screen.getByRole('status')).toHaveTextContent('El Sol está demasiado bajo');
   });
 });
+
+describe('RouteComparisonPanel with the recommended route (PBI-9.1)', () => {
+  it('explains that the fastest route is the recommended one, without shade data', () => {
+    render(
+      <RouteComparisonPanel
+        comparison={{
+          status: 'fastest_only',
+          fastest: { duration: 600, windExposure: { status: 'unavailable', exposure: null } },
+          shaded: null,
+          additionalDurationSeconds: null,
+        }}
+        selectedRouteType="fastest"
+        alternativeLabel="Recomendada"
+        onSelectRoute={jest.fn()}
+      />
+    );
+
+    expect(
+      screen.getByText('Con el tiempo actual, la ruta recomendada es la más rápida.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/sombra/i)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Recomendada/ })).toBeDisabled();
+  });
+});
+
+describe('RouteComparisonPanel with the green (PBI-10 phase B)', () => {
+  const greenRoute = (duration, greenPercentage) => ({
+    duration,
+    exposure: {
+      status: 'unavailable',
+      reason: 'not_requested',
+      shadePercentage: null,
+      sunPercentage: null,
+    },
+    vegetation: { status: 'available', greenPercentage },
+  });
+
+  it('shows the green of each route and how much greener the chosen one is', () => {
+    render(
+      <RouteComparisonPanel
+        comparison={{
+          status: 'selected',
+          fastest: greenRoute(600, 3),
+          shaded: greenRoute(720, 71.6),
+          additionalDurationSeconds: 120,
+          shadeImprovementPercentagePoints: null,
+          windChangePoints: null,
+          greenChangePercentagePoints: 68.6,
+        }}
+        selectedRouteType="shaded"
+        alternativeLabel="Parques"
+        onSelectRoute={jest.fn()}
+      />
+    );
+
+    expect(screen.getByText('3 % verde')).toBeInTheDocument();
+    expect(screen.getByText('72 % verde')).toBeInTheDocument();
+    expect(screen.queryByText(/sombra/)).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Parques añade 2 min y tiene 69 puntos más de verde.')
+    ).toBeInTheDocument();
+  });
+
+  it('says nothing about the green when it was not calculated', () => {
+    render(
+      <RouteComparisonPanel
+        comparison={{
+          status: 'no_better_alternative',
+          fastest: {
+            duration: 600,
+            vegetation: { status: 'unavailable', reason: 'not_requested', greenPercentage: null },
+          },
+          shaded: null,
+          additionalDurationSeconds: null,
+        }}
+        selectedRouteType="fastest"
+        alternativeLabel="Cierzo"
+        onSelectRoute={jest.fn()}
+      />
+    );
+
+    expect(screen.queryByText(/verde/)).not.toBeInTheDocument();
+  });
+});

@@ -73,6 +73,26 @@ describe('apiRequest', () => {
       });
     });
 
+    it('exposes which route already has a repeated name (#165)', async () => {
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 409,
+        json: async () => ({
+          error: {
+            message: 'x',
+            fields: { name: 'Ya tienes una ruta llamada «Verano».' },
+            existingId: 4,
+          },
+        }),
+      });
+
+      await expect(apiRequest('/route-profiles', { method: 'POST' })).rejects.toMatchObject({
+        status: 409,
+        existingId: 4,
+        fields: { name: 'Ya tienes una ruta llamada «Verano».' },
+      });
+    });
+
     it('notifies an expired session only when a token was sent', async () => {
       const onUnauthorized = jest.fn();
       setUnauthorizedHandler(onUnauthorized);

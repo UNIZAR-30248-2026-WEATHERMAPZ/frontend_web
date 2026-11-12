@@ -39,6 +39,7 @@ export function RouteSummary({
   distance,
   duration,
   shadePercentage = null,
+  greenPercentage = null,
   title = 'Ruta rápida',
 }) {
   return (
@@ -61,6 +62,13 @@ export function RouteSummary({
             <span aria-hidden="true">☂</span>
             <dt>Sombra</dt>
             <dd>{Math.round(shadePercentage)} %</dd>
+          </div>
+        )}
+        {Number.isFinite(greenPercentage) && (
+          <div className="route-summary-metric route-summary-green">
+            <span aria-hidden="true">❦</span>
+            <dt>Verde</dt>
+            <dd>{Math.round(greenPercentage)} %</dd>
           </div>
         )}
         <div className="route-summary-metric">

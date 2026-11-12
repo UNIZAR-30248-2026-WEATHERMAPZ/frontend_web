@@ -42,7 +42,7 @@ export function AllProfilesDialog({ profiles, selectedId, onSelect, onClose }) {
                   onClose();
                 }}
               >
-                <ProfileIcons weights={profile.weights} />
+                <ProfileIcons weights={profile.weights} icon={profile.icon} />
                 <strong>{profile.name}</strong>
                 <small>{weightsSummary(profile).join(' · ')}</small>
               </button>

@@ -7,10 +7,13 @@ import { isInsideZaragoza, OUTSIDE_ZARAGOZA_MESSAGE } from '../features/map/zara
 import { RouteComparisonPanel } from '../features/route-comparison/RouteComparisonPanel.jsx';
 import { RouteProfilePicker } from '../features/route-profiles/RouteProfilePicker.jsx';
 import {
+  RECOMMENDED_PROFILE,
+  RECOMMENDED_PROFILE_ID,
   hasEnvironmentalWeight,
   hasShadeWeight,
   useRouteProfiles,
 } from '../features/route-profiles/useRouteProfiles.js';
+import { RecommendationCard } from '../features/route-recommendation/RecommendationCard.jsx';
 import { NavigationPanel } from '../features/routing/NavigationPanel.jsx';
 import { useRouteNavigation } from '../features/routing/useRouteNavigation.js';
 import { getZaragozaDateTime } from '../features/routing/zaragozaDateTime.js';
@@ -50,16 +53,21 @@ export function App({ userMenu = null }) {
     };
   }
 
+  // The recommended route (PBI-9.1) goes first, but the default is still the first saved route.
+  const pickerProfiles = [RECOMMENDED_PROFILE, ...routeProfiles.profiles];
   // While loading, the presets are shown with their presetKey as id: a choice made then is kept
   // once the routes of the user arrive.
   const profile =
-    routeProfiles.profiles.find(({ id }) => id === profileId) ??
+    pickerProfiles.find(({ id }) => id === profileId) ??
     routeProfiles.profiles.find(({ presetKey }) => presetKey && presetKey === profileId) ??
     routeProfiles.profiles[0] ??
     null;
   // Internally "shaded" is still the route chosen with the weights: it is shown like the Shaded
   // Route of PBI-5.4, with the name of the profile.
-  const routeType = profile && hasEnvironmentalWeight(profile.weights) ? 'shaded' : 'fastest';
+  // The recommended route is compared with the fastest one like any route with weights.
+  const isRecommended = profile?.id === RECOMMENDED_PROFILE_ID;
+  const routeType =
+    isRecommended || (profile && hasEnvironmentalWeight(profile.weights)) ? 'shaded' : 'fastest';
   const alternativeLabel = profile?.name ?? 'Con sombra';
   const selectedRouteType =
     routeType === 'shaded' && shownRoute === 'shaded' && routePlanner.shaded ? 'shaded' : 'fastest';
@@ -135,6 +143,7 @@ export function App({ userMenu = null }) {
                 setShownRoute('shaded');
                 routePlanner.calculateRoute(routePoints.origin, routePoints.destination, {
                   routeType,
+                  recommended: isRecommended,
                   weights: profile?.weights,
                   maxDetourPercentage: profile?.maxDetourPercentage,
                   ...solarDateTime,
@@ -156,17 +165,21 @@ export function App({ userMenu = null }) {
               onStartNavigation={navigation.start}
               navigationError={navigation.errorMessage}
               routeType={routeType}
-              asksSolarDateTime={routeType === 'shaded' && hasShadeWeight(profile.weights)}
+              // The recommended route is always for now, with the current weather.
+              asksSolarDateTime={
+                !isRecommended && routeType === 'shaded' && hasShadeWeight(profile.weights)
+              }
               alternativeLabel={alternativeLabel}
               profilePicker={
                 <RouteProfilePicker
-                  profiles={routeProfiles.profiles}
+                  profiles={pickerProfiles}
                   selectedId={profile?.id ?? null}
                   isEditable={routeProfiles.isEditable}
                   loadFailed={routeProfiles.loadFailed}
                   onSelect={selectProfile}
                   onSave={saveProfile}
                   onDelete={deleteProfile}
+                  onReplace={routeProfiles.replaceProfile}
                 />
               }
               solarDate={solarDateTime.date}
@@ -175,13 +188,19 @@ export function App({ userMenu = null }) {
               onSolarTimeChange={(value) => updateSolarDateTime('time', value)}
               renderComparison={(collapse) =>
                 routePlanner.comparison ? (
-                  <RouteComparisonPanel
-                    comparison={routePlanner.comparison}
-                    selectedRouteType={selectedRouteType}
-                    alternativeLabel={alternativeLabel}
-                    onSelectRoute={setShownRoute}
-                    {...collapse}
-                  />
+                  <>
+                    <RecommendationCard
+                      recommendation={routePlanner.comparison.recommendation}
+                      isExpanded={collapse.isExpanded}
+                    />
+                    <RouteComparisonPanel
+                      comparison={routePlanner.comparison}
+                      selectedRouteType={selectedRouteType}
+                      alternativeLabel={alternativeLabel}
+                      onSelectRoute={setShownRoute}
+                      {...collapse}
+                    />
+                  </>
                 ) : null
               }
             />

@@ -417,4 +417,126 @@ describe('RouteSearchPanel', () => {
     view.rerender(<StatefulPanel />);
     expect(screen.getByRole('alert')).toHaveTextContent('Búsqueda no disponible');
   });
+
+  describe('Enter without a highlighted suggestion', () => {
+    const PLAZA = {
+      id: 'place-1',
+      label: 'Plaza de España, Zaragoza, Spain',
+      lat: 41.651386,
+      lng: -0.881746,
+    };
+    const OTHER = { id: 'place-2', label: 'Plaza de España 2', lat: 41.6519, lng: -0.8805 };
+    let settled;
+
+    // The hook is simulated: `settled.origin(results)` is what it does when the search ends.
+    function simulateSearch(state) {
+      settled = {};
+      usePlaceAutocomplete.mockImplementation((_query, _enabled, field, onSettled) => {
+        settled[field] = onSettled;
+        return state();
+      });
+    }
+
+    it('chooses the first suggestion', async () => {
+      const user = userEvent.setup();
+      const onSetPoint = jest.fn();
+      simulateSearch(() => ({ errorMessage: '', isLoading: false, results: [PLAZA, OTHER] }));
+      render(<StatefulPanel onSetPoint={onSetPoint} />);
+
+      await user.type(screen.getByLabelText('Origen'), 'plaza españa{Enter}');
+
+      expect(onSetPoint).toHaveBeenCalledWith('origin', {
+        lat: PLAZA.lat,
+        lng: PLAZA.lng,
+        label: PLAZA.label,
+        source: 'search',
+      });
+      expect(screen.getByLabelText('Origen')).toHaveValue(PLAZA.label);
+      expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    });
+
+    it('still chooses the highlighted one when there is one', async () => {
+      const user = userEvent.setup();
+      const onSetPoint = jest.fn();
+      simulateSearch(() => ({ errorMessage: '', isLoading: false, results: [PLAZA, OTHER] }));
+      render(<StatefulPanel onSetPoint={onSetPoint} />);
+
+      await user.type(screen.getByLabelText('Origen'), 'plaza españa');
+      await user.keyboard('{ArrowDown}{ArrowDown}{Enter}');
+
+      expect(onSetPoint).toHaveBeenCalledWith(
+        'origin',
+        expect.objectContaining({ label: OTHER.label })
+      );
+    });
+
+    it('waits for the suggestions that are still loading and chooses the first', async () => {
+      const user = userEvent.setup();
+      const onSetPoint = jest.fn();
+      let state = { errorMessage: '', isLoading: true, results: [] };
+      simulateSearch(() => state);
+      render(<StatefulPanel onSetPoint={onSetPoint} />);
+
+      await user.type(screen.getByLabelText('Origen'), 'plaza españa{Enter}');
+      expect(onSetPoint).not.toHaveBeenCalled();
+      expect(screen.getByRole('status')).toHaveTextContent('Buscando lugares');
+
+      state = { errorMessage: '', isLoading: false, results: [PLAZA] };
+      act(() => settled.origin([PLAZA]));
+
+      expect(onSetPoint).toHaveBeenCalledWith(
+        'origin',
+        expect.objectContaining({ label: PLAZA.label })
+      );
+      expect(screen.getByLabelText('Origen')).toHaveValue(PLAZA.label);
+    });
+
+    it('shows the "not found" message when no suggestion arrives', async () => {
+      const user = userEvent.setup();
+      const onSetPoint = jest.fn();
+      let state = { errorMessage: '', isLoading: true, results: [] };
+      simulateSearch(() => state);
+      const view = render(<StatefulPanel onSetPoint={onSetPoint} />);
+
+      await user.type(screen.getByLabelText('Origen'), 'xyzxyz{Enter}');
+      state = { errorMessage: '', isLoading: false, results: [] };
+      act(() => settled.origin([]));
+      view.rerender(<StatefulPanel onSetPoint={onSetPoint} />);
+
+      expect(onSetPoint).not.toHaveBeenCalled();
+      expect(screen.getByRole('status')).toHaveTextContent('No se han encontrado lugares');
+      expect(screen.getByLabelText('Origen')).toHaveValue('xyzxyz');
+    });
+
+    it('shows the "not found" message at once when the search has already ended empty', async () => {
+      const user = userEvent.setup();
+      const onSetPoint = jest.fn();
+      simulateSearch(() => ({ errorMessage: '', isLoading: false, results: [] }));
+      render(<StatefulPanel onSetPoint={onSetPoint} />);
+
+      await user.type(screen.getByLabelText('Origen'), 'xyzxyz{Enter}');
+
+      expect(onSetPoint).not.toHaveBeenCalled();
+      expect(screen.getByRole('status')).toHaveTextContent('No se han encontrado lugares');
+    });
+
+    it('forgets the Enter if the text changes, the field loses the focus or Escape is pressed', async () => {
+      const user = userEvent.setup();
+      const onSetPoint = jest.fn();
+      simulateSearch(() => ({ errorMessage: '', isLoading: true, results: [] }));
+      render(<StatefulPanel onSetPoint={onSetPoint} />);
+      const input = screen.getByLabelText('Origen');
+
+      await user.type(input, 'plaza españa{Enter}');
+      await user.type(input, 'a');
+      act(() => settled.origin([PLAZA]));
+      await user.type(input, '{Enter}{Escape}');
+      act(() => settled.origin([PLAZA]));
+      await user.type(input, '{Enter}');
+      fireEvent.blur(input);
+      act(() => settled.origin([PLAZA]));
+
+      expect(onSetPoint).not.toHaveBeenCalled();
+    });
+  });
 });

@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { App } from './App.jsx';
@@ -8,7 +8,11 @@ import {
   listRouteProfiles,
   updateRouteProfile,
 } from '../services/api/routeProfilesApi.js';
-import { getFastestRoute, getWeightedRouteComparison } from '../services/api/routesApi.js';
+import {
+  getFastestRoute,
+  getRecommendedRoute,
+  getWeightedRouteComparison,
+} from '../services/api/routesApi.js';
 
 jest.mock('../services/api/geocodingApi.js', () => ({
   autocompletePlaces: jest.fn(),
@@ -17,6 +21,7 @@ jest.mock('../services/api/geocodingApi.js', () => ({
 
 jest.mock('../services/api/routesApi.js', () => ({
   getFastestRoute: jest.fn(),
+  getRecommendedRoute: jest.fn(),
   getWeightedRouteComparison: jest.fn(),
 }));
 
@@ -75,6 +80,7 @@ describe('App', () => {
 
   beforeEach(() => {
     getFastestRoute.mockReset();
+    getRecommendedRoute.mockReset();
     getWeightedRouteComparison.mockReset();
     listRouteProfiles.mockReset().mockResolvedValue(PROFILES);
     createRouteProfile.mockReset();
@@ -419,6 +425,33 @@ describe('App', () => {
   });
 
   describe('routes of the user', () => {
+    it('calculates a green route without asking for date and time (PBI-10 phase B)', async () => {
+      const user = userEvent.setup();
+      const parks = {
+        id: 4,
+        name: 'Parques',
+        presetKey: null,
+        weights: { shade: 0, sun: 0, wind: 0, vegetation: 80 },
+        maxDetourPercentage: 25,
+      };
+      listRouteProfiles.mockResolvedValue([...PROFILES, parks]);
+      getWeightedRouteComparison.mockReturnValue(new Promise(() => {}));
+      render(<App />);
+
+      await user.click(await screen.findByRole('button', { name: 'Parques' }));
+      // The green does not depend on the Sun: no date and time.
+      expect(screen.queryByLabelText('Hora')).not.toBeInTheDocument();
+      await user.click(screen.getByText('Select map point'));
+      await user.click(screen.getByText('Select map point'));
+      await user.click(screen.getByRole('button', { name: 'Calcular ruta' }));
+
+      expect(getWeightedRouteComparison).toHaveBeenCalledWith(
+        expect.objectContaining({ weights: parks.weights, maxDetourPercentage: 25 }),
+        { signal: expect.any(AbortSignal) }
+      );
+      expect(getFastestRoute).not.toHaveBeenCalled();
+    });
+
     it('starts with the fastest route and only asks for it, without weights', async () => {
       const user = userEvent.setup();
       getFastestRoute.mockReturnValue(new Promise(() => {}));
@@ -456,7 +489,7 @@ describe('App', () => {
 
       expect(createRouteProfile).toHaveBeenCalledWith({
         name: 'Verano',
-        weights: { shade: 50, sun: 0, wind: 0 },
+        weights: { shade: 50, sun: 0, wind: 0, vegetation: 0 },
         maxDetourPercentage: 25,
       });
       expect(await screen.findByRole('button', { name: 'Verano' })).toHaveAttribute(
@@ -499,6 +532,141 @@ describe('App', () => {
       expect(await screen.findByText(/No se han podido cargar tus rutas/)).toBeInTheDocument();
       expect(screen.getByRole('button', { name: 'Sombreada' })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: 'Nueva ruta' })).not.toBeInTheDocument();
+    });
+  });
+
+  describe('recommended route (PBI-9.1)', () => {
+    const line = (lng) => ({
+      type: 'LineString',
+      coordinates: [
+        [-0.89, 41.65],
+        [lng, 41.66],
+      ],
+    });
+    const fastest = {
+      geometry: line(-0.88),
+      distance: 1000,
+      duration: 600,
+      exposure: { status: 'available', shadePercentage: 10, sunPercentage: 90 },
+      windExposure: { status: 'available', exposure: 0 },
+    };
+    const shaded = {
+      ...fastest,
+      geometry: line(-0.87),
+      distance: 1100,
+      duration: 660,
+      exposure: { status: 'available', shadePercentage: 80, sunPercentage: 20 },
+    };
+    const recommendation = {
+      criterion: 'hot',
+      label: 'Calor',
+      reason:
+        'Hace calor (sensación de 31 °C): se busca sombra aceptando hasta un 25 % más de tiempo.',
+      weights: { shade: 50, sun: 0, wind: 0 },
+      maxDetourPercentage: 25,
+      weather: {
+        temperature: 30,
+        apparentTemperature: 31,
+        windSpeed: 8,
+        windGusts: 20,
+        windDirection: 300,
+        observedAt: '2026-07-15T13:00',
+      },
+      rules: [],
+    };
+
+    it('goes first in the row, but the fastest route is still the default', async () => {
+      render(<App />);
+      await screen.findByRole('button', { name: 'Nueva ruta' });
+
+      const cards = within(document.querySelector('.route-profile-list')).getAllByRole('button');
+      expect(cards[0]).toHaveAccessibleName('Recomendada');
+      expect(cards[0]).toHaveAttribute('aria-pressed', 'false');
+      expect(screen.getByRole('button', { name: 'Rápida' })).toHaveAttribute(
+        'aria-pressed',
+        'true'
+      );
+    });
+
+    it('is calculated for now with the weather and explains the criterion', async () => {
+      const user = userEvent.setup();
+      getRecommendedRoute.mockResolvedValue({
+        status: 'selected',
+        fastest,
+        shaded,
+        additionalDurationSeconds: 60,
+        shadeImprovementPercentagePoints: 70,
+        windChangePoints: 0,
+        recommendation,
+      });
+      render(<App />);
+      await screen.findByRole('button', { name: 'Nueva ruta' });
+
+      await user.click(screen.getByRole('button', { name: 'Recomendada' }));
+      // Always for now: no date or time, and nothing to edit or delete.
+      expect(screen.queryByLabelText('Hora')).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /Editar/ })).not.toBeInTheDocument();
+      await user.click(screen.getByText('Select map point'));
+      await user.click(screen.getByText('Select map point'));
+      await user.click(screen.getByRole('button', { name: 'Calcular ruta' }));
+
+      expect(getRecommendedRoute).toHaveBeenCalledWith(
+        { origin: expect.any(Object), destination: expect.any(Object) },
+        { signal: expect.any(AbortSignal) }
+      );
+      expect(getWeightedRouteComparison).not.toHaveBeenCalled();
+      expect(getFastestRoute).not.toHaveBeenCalled();
+      expect(
+        await screen.findByRole('heading', { name: 'Recomendada: Calor' })
+      ).toBeInTheDocument();
+      expect(screen.getByText(recommendation.reason)).toBeInTheDocument();
+      expect(screen.getByRole('meter', { name: 'Sombra o sol' })).toHaveAttribute(
+        'aria-valuetext',
+        'Sombra 50 %'
+      );
+      expect(screen.getByText(/Tiempo usado \(dato de las 13:00\): 30 °C/)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Recomendada añade 1 min y tiene 70 puntos más de sombra/)
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('route-geometry')).toHaveTextContent(
+        JSON.stringify(shaded.geometry.coordinates)
+      );
+    });
+
+    it('shows the fastest route when the weather recommends it', async () => {
+      const user = userEvent.setup();
+      getRecommendedRoute.mockResolvedValue({
+        status: 'fastest_only',
+        fastest: { ...fastest, exposure: undefined },
+        shaded: null,
+        additionalDurationSeconds: null,
+        recommendation: {
+          ...recommendation,
+          criterion: 'mild',
+          label: 'Tiempo templado',
+          reason:
+            'Temperatura agradable (sensación de 17 °C) y poco viento (13 km/h): la ruta recomendada es la más rápida.',
+          weights: { shade: 0, sun: 0, wind: 0 },
+        },
+      });
+      render(<App />);
+      await screen.findByRole('button', { name: 'Nueva ruta' });
+
+      await user.click(screen.getByRole('button', { name: 'Recomendada' }));
+      await user.click(screen.getByText('Select map point'));
+      await user.click(screen.getByText('Select map point'));
+      await user.click(screen.getByRole('button', { name: 'Calcular ruta' }));
+
+      expect(
+        await screen.findByRole('heading', { name: 'Recomendada: Tiempo templado' })
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Con el tiempo actual, la ruta recomendada es la más rápida.')
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('route-geometry')).toHaveTextContent(
+        JSON.stringify(fastest.geometry.coordinates)
+      );
+      expect(screen.getByRole('button', { name: 'Iniciar ruta' })).toBeInTheDocument();
     });
   });
 });

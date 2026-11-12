@@ -113,4 +113,29 @@ describe('usePlaceAutocomplete', () => {
     rerender({ enabled: false });
     expect(result.current).toEqual({ results: [], errorMessage: '', isLoading: false });
   });
+
+  it('tells when a search ends, with its results or with none if it fails', async () => {
+    const onSettled = jest.fn();
+    const results = [{ id: 'place-1', label: 'Plaza del Pilar', lat: 41.656, lng: -0.878 }];
+    autocompletePlaces.mockResolvedValueOnce({ results });
+    const { rerender } = renderHook(
+      ({ query }) => usePlaceAutocomplete(query, true, 'origin', onSettled),
+      {
+        initialProps: { query: 'Pilar' },
+      }
+    );
+
+    act(() => {
+      jest.advanceTimersByTime(350);
+    });
+    await waitFor(() => expect(onSettled).toHaveBeenCalledWith(results));
+
+    autocompletePlaces.mockRejectedValueOnce(new Error('Sin servicio'));
+    rerender({ query: 'Plaza de España' });
+    act(() => {
+      jest.advanceTimersByTime(350);
+    });
+    await waitFor(() => expect(onSettled).toHaveBeenLastCalledWith([]));
+    expect(onSettled).toHaveBeenCalledTimes(2);
+  });
 });

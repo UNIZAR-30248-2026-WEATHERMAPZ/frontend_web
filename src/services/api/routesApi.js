@@ -77,11 +77,25 @@ function isValidWindExposure(windExposure) {
   );
 }
 
+// Green percentage of the route (PBI-10 phase B), 0-100.
+function isValidVegetation(vegetation) {
+  if (vegetation === undefined || vegetation?.status === 'unavailable') {
+    return vegetation === undefined || vegetation.greenPercentage === null;
+  }
+  return (
+    vegetation?.status === 'available' &&
+    Number.isFinite(vegetation.greenPercentage) &&
+    vegetation.greenPercentage >= 0 &&
+    vegetation.greenPercentage <= 100
+  );
+}
+
 function isValidEnvironmentalRoute(route) {
   return (
     isValidRoute(route) &&
     isValidExposure(route.exposure) &&
-    isValidWindExposure(route.windExposure)
+    isValidWindExposure(route.windExposure) &&
+    isValidVegetation(route.vegetation)
   );
 }
 
@@ -123,10 +137,73 @@ export async function getWeightedRouteComparison(
     shaded: data.comparison.selected ?? null,
     shadeImprovementPercentagePoints: data.comparison.shadeChangePercentagePoints ?? null,
     windChangePoints: data.comparison.windChangePoints ?? null,
+    greenChangePercentagePoints: data.comparison.greenChangePercentagePoints ?? null,
   };
 
   if (!isValidComparison(comparison)) {
     throw new Error('El servidor ha devuelto una comparación no válida. Inténtalo de nuevo.');
+  }
+
+  return comparison;
+}
+
+const WEIGHT_KEYS = ['shade', 'sun', 'wind'];
+
+// The weights and the reason chosen by the backend with the current weather (PBI-9.1, ADR-029).
+function isValidRecommendation(recommendation) {
+  return (
+    typeof recommendation?.criterion === 'string' &&
+    typeof recommendation.label === 'string' &&
+    typeof recommendation.reason === 'string' &&
+    WEIGHT_KEYS.every(
+      (key) =>
+        Number.isFinite(recommendation.weights?.[key]) &&
+        recommendation.weights[key] >= 0 &&
+        recommendation.weights[key] <= 100
+    ) &&
+    Number.isFinite(recommendation.maxDetourPercentage) &&
+    (recommendation.weather === null || Number.isFinite(recommendation.weather?.temperature))
+  );
+}
+
+// With every weight at 0 the backend only asks for the fastest route: it has no shade exposure.
+function isValidRecommendedComparison(comparison) {
+  if (comparison?.status === 'fastest_only') {
+    return (
+      isValidRoute(comparison.fastest) &&
+      isValidWindExposure(comparison.fastest.windExposure) &&
+      comparison.shaded === null
+    );
+  }
+  return isValidComparison(comparison);
+}
+
+// Recommended route (PBI-9.1): only the points. It is always for now, with the current weather, so
+// no date or time is sent. Same shape as the weighted comparison, plus `recommendation`.
+export async function getRecommendedRoute({ origin, destination }, { signal } = {}) {
+  const data = await apiRequest('/routes/recommended', {
+    method: 'POST',
+    signal,
+    body: JSON.stringify({
+      origin: { lat: origin.lat, lng: origin.lng },
+      destination: { lat: destination.lat, lng: destination.lng },
+    }),
+    errorMessages: ROUTE_ERROR_MESSAGES,
+    fallbackErrorMessage: 'No se ha podido calcular la ruta. Inténtalo de nuevo.',
+  });
+  const comparison = data?.comparison && {
+    ...data.comparison,
+    shaded: data.comparison.selected ?? null,
+    shadeImprovementPercentagePoints: data.comparison.shadeChangePercentagePoints ?? null,
+    windChangePoints: data.comparison.windChangePoints ?? null,
+    greenChangePercentagePoints: data.comparison.greenChangePercentagePoints ?? null,
+  };
+
+  if (
+    !isValidRecommendedComparison(comparison) ||
+    !isValidRecommendation(comparison.recommendation)
+  ) {
+    throw new Error('El servidor ha devuelto una ruta recomendada no válida. Inténtalo de nuevo.');
   }
 
   return comparison;
