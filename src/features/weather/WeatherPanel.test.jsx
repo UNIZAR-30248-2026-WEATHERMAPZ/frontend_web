@@ -37,7 +37,7 @@ describe('WeatherPanel', () => {
     expect(await screen.findByText('17.5 °C')).toBeInTheDocument();
     expect(screen.getByText('9.2 km/h SO')).toBeInTheDocument();
     expect(screen.getByText('Cubierto')).toBeInTheDocument();
-    expect(screen.getByText(/Actualizado a las/)).toBeInTheDocument();
+    expect(screen.getByText(/Estimación para las/)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Open-Meteo/ })).toHaveAttribute(
       'href',
       'https://open-meteo.com/'
