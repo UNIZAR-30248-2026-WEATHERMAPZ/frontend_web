@@ -124,6 +124,17 @@ solo en el backend.
 - Abrir "Ruta" recoge la comparación y "Ver más" pliega el panel: nunca se pisan.
 - Comprueba también el móvil en horizontal (844 x 390).
 
+## Comprobaciones de la meteorología actual (PBI-17)
+
+- Al abrir el mapa, el panel muestra temperatura, velocidad y dirección del viento, condición del
+  cielo y hora observada; la atribución enlaza a Open-Meteo.
+- Durante la petición aparece un estado de carga. Si falla el endpoint, el aviso explica que el mapa
+  y las rutas siguen disponibles.
+- Comprueba el panel y la hoja inferior con origen/destino en 375, 390, 768, 1366 y 1920 px, además
+  de 844 x 390 en horizontal: no debe aparecer scroll horizontal ni tapar los controles de ruta.
+- El endpoint requiere sesión y se consume mediante `src/services/api/weatherApi.js`; si el proveedor
+  no entrega `weatherCode`, el panel indica que el estado del cielo no está disponible.
+
 ## Comprobaciones de la PBI-6
 
 - Bajo origen y destino aparecen tus rutas como tarjetas con icono: Rápida, Sombreada, Soleada y las
