@@ -58,7 +58,7 @@ describe('getFastestRoute', () => {
     [429, 'está ocupado'],
     [503, 'no está configurado'],
     [504, 'ha tardado demasiado'],
-    [502, 'No se ha podido calcular'],
+    [502, 'OpenRouteService no ha podido responder'],
   ])('shows a route-specific message for status %s', async (status, message) => {
     global.fetch = jest.fn().mockResolvedValue({ ok: false, status });
     await expect(getFastestRoute({ origin, destination })).rejects.toThrow(message);

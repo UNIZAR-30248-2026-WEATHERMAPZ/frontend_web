@@ -1405,8 +1405,8 @@ input:focus-visible {
 .weather-panel {
   position: absolute;
   z-index: 500;
-  right: 1.25rem;
-  bottom: 1.25rem;
+  left: 1.25rem;
+  bottom: 4.5rem;
   width: min(19rem, calc(100% - 2.5rem));
   border: 1px solid rgba(255, 255, 255, 0.88);
   border-radius: 1rem;
@@ -1465,6 +1465,36 @@ input:focus-visible {
 
 .weather-observed-time { margin: 0.55rem 0 0; }
 
+.weather-extra { margin-top: 0.5rem; }
+
+.weather-extra summary {
+  width: fit-content;
+  color: #176d58;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.weather-extra-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin: 0.45rem 0 0;
+}
+
+.weather-extra-metrics dt {
+  color: #718096;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.weather-extra-metrics dd {
+  margin: 0.12rem 0 0;
+  color: #20394b;
+  font-size: 0.74rem;
+  font-weight: 750;
+}
+
 .weather-attribution {
   display: inline-block;
   margin-top: 0.5rem;
@@ -1481,7 +1511,8 @@ input:focus-visible {
 
 @media (max-width: 56.24rem) {
   .weather-panel {
-    right: 0.65rem;
+    right: auto;
+    left: 0.65rem;
     bottom: calc(var(--route-sheet-height, 6.5rem) + max(0.65rem, env(safe-area-inset-bottom)) + 0.45rem);
     width: min(14rem, calc(100% - 1.3rem));
     padding: 0.65rem 0.75rem 0.55rem;
@@ -1498,7 +1529,8 @@ input:focus-visible {
   .weather-metrics dd { font-size: 0.69rem; }
 
   .weather-observed-time,
-  .weather-attribution { font-size: 0.63rem; }
+  .weather-attribution,
+  .weather-extra summary { font-size: 0.63rem; }
 }
 
 @media (max-width: 56.24rem) and (max-height: 30rem) {

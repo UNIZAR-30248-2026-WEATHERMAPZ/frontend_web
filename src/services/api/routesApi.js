@@ -5,8 +5,11 @@ export function getApiHealth() {
 }
 
 const ROUTE_ERROR_MESSAGES = {
+  401: 'Tu sesión ha caducado. Inicia sesión de nuevo para calcular rutas.',
   400: 'El origen o el destino no son válidos.',
   429: 'El servicio de rutas está ocupado. Inténtalo de nuevo en unos instantes.',
+  500: 'El servidor ha encontrado un problema al calcular la ruta. Inténtalo otra vez.',
+  502: 'OpenRouteService no ha podido responder. Espera un momento y vuelve a calcular la ruta.',
   503: 'El cálculo de rutas no está configurado.',
   504: 'El cálculo de la ruta ha tardado demasiado. Inténtalo de nuevo.',
 };

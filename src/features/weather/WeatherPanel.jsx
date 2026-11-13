@@ -65,8 +65,31 @@ export function WeatherPanel() {
               <dd>{getWeatherDescription(weather.weatherCode)}</dd>
             </div>
           </dl>
+          {(Number.isFinite(weather.apparentTemperature) || Number.isFinite(weather.windGusts)) && (
+            <details className="weather-extra">
+              <summary>Más datos</summary>
+              <dl className="weather-extra-metrics">
+                {Number.isFinite(weather.apparentTemperature) && (
+                  <div>
+                    <dt>Sensación térmica</dt>
+                    <dd>
+                      {weather.apparentTemperature} {weather.apparentTemperatureUnit || '°C'}
+                    </dd>
+                  </div>
+                )}
+                {Number.isFinite(weather.windGusts) && (
+                  <div>
+                    <dt>Rachas</dt>
+                    <dd>
+                      {weather.windGusts} {weather.windGustsUnit || weather.windSpeedUnit}
+                    </dd>
+                  </div>
+                )}
+              </dl>
+            </details>
+          )}
           {observedTime && (
-            <p className="weather-observed-time">Actualizado a las {observedTime}</p>
+            <p className="weather-observed-time">Estimación para las {observedTime}</p>
           )}
         </>
       )}
