@@ -3,6 +3,10 @@ import { render, screen } from '@testing-library/react';
 import { MapView } from './MapView.jsx';
 import { MAP_BOUNDS } from './zaragozaArea.js';
 
+jest.mock('../weather/WeatherPanel.jsx', () => ({
+  WeatherPanel: () => <div data-testid="weather-panel" />,
+}));
+
 jest.mock('react-leaflet', () => ({
   CircleMarker: () => null,
   Circle: ({ center, radius, interactive }) => (
@@ -82,6 +86,12 @@ describe('MapView', () => {
     expect(screen.getAllByText('Origen')).toHaveLength(2);
     expect(screen.getAllByText('Destino')).toHaveLength(2);
     expect(screen.getByText('Toca el mapa para fijar el destino.')).toBeInTheDocument();
+  });
+
+  it('places the weather panel over the map independently of the route controls', () => {
+    render(<MapView />);
+
+    expect(screen.getByTestId('weather-panel')).toBeInTheDocument();
   });
 
   it('renders the route geometry received from the backend', () => {

@@ -1402,6 +1402,111 @@ input:focus-visible {
 
 .map-legend { display: none; }
 
+.weather-panel {
+  position: absolute;
+  z-index: 500;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  width: min(19rem, calc(100% - 2.5rem));
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 1rem;
+  padding: 0.85rem 1rem 0.7rem;
+  color: #24364b;
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0.55rem 1.5rem rgba(24, 35, 31, 0.16);
+  backdrop-filter: blur(0.55rem);
+}
+
+.weather-panel-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.55rem;
+}
+
+.weather-panel-header h2 {
+  margin: 0;
+  color: #17382f;
+  font-size: 0.94rem;
+  letter-spacing: -0.02em;
+}
+
+.weather-panel-header span,
+.weather-observed-time,
+.weather-attribution {
+  color: #68788d;
+  font-size: 0.69rem;
+}
+
+.weather-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.45rem;
+  margin: 0;
+}
+
+.weather-metrics > div { min-width: 0; }
+
+.weather-metrics dt {
+  color: #718096;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.weather-metrics dd {
+  margin: 0.15rem 0 0;
+  color: #20394b;
+  font-size: 0.76rem;
+  font-weight: 750;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.weather-observed-time { margin: 0.55rem 0 0; }
+
+.weather-attribution {
+  display: inline-block;
+  margin-top: 0.5rem;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.weather-panel-message {
+  margin: 0;
+  color: #7d3d2f;
+  font-size: 0.77rem;
+  line-height: 1.4;
+}
+
+@media (max-width: 56.24rem) {
+  .weather-panel {
+    right: 0.65rem;
+    bottom: calc(var(--route-sheet-height, 6.5rem) + max(0.65rem, env(safe-area-inset-bottom)) + 0.45rem);
+    width: min(14rem, calc(100% - 1.3rem));
+    padding: 0.65rem 0.75rem 0.55rem;
+  }
+
+  .weather-panel-header { margin-bottom: 0.4rem; }
+
+  .weather-panel-header h2 { font-size: 0.86rem; }
+
+  .weather-metrics { gap: 0.3rem; }
+
+  .weather-metrics dt { font-size: 0.6rem; }
+
+  .weather-metrics dd { font-size: 0.69rem; }
+
+  .weather-observed-time,
+  .weather-attribution { font-size: 0.63rem; }
+}
+
+@media (max-width: 56.24rem) and (max-height: 30rem) {
+  .weather-panel {
+    bottom: calc(7.2rem + max(0.65rem, env(safe-area-inset-bottom)));
+  }
+}
+
 .location-marker-icon {
   background: transparent;
   border: 0;
