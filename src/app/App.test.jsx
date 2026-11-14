@@ -38,6 +38,10 @@ const PROFILES = [
   { id: 3, name: 'Soleada', presetKey: 'sunny', weights: { shade: 0, sun: 50 } },
 ].map((profile) => ({ ...profile, maxDetourPercentage: 25 }));
 
+jest.mock('../features/weather/WeatherPanel.jsx', () => ({
+  WeatherPanel: () => <section data-testid="weather-panel" />,
+}));
+
 jest.mock('../features/map/MapView.jsx', () => ({
   MapView: ({
     origin,
@@ -93,6 +97,13 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'WeatherMapZ' })).toBeInTheDocument();
     expect(screen.getByLabelText('Controles de ruta')).toBeInTheDocument();
     expect(screen.getByTestId('map-view')).toBeInTheDocument();
+  });
+
+  it('shows the current weather outside the map and the route controls', () => {
+    render(<App />);
+    const weather = screen.getByTestId('weather-panel');
+    expect(screen.getByTestId('map-view')).not.toContainElement(weather);
+    expect(screen.getByLabelText('Controles de ruta')).not.toContainElement(weather);
   });
 
   it('keeps map selection, editable inputs and markers synchronized', async () => {

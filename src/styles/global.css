@@ -1625,27 +1625,81 @@ input:focus-visible {
 
 .map-legend { display: none; }
 
+/* Tiempo actual (PBI-17): pastilla arriba a la derecha, junto al icono de usuario, que despliega
+   el detalle. Ocupa poco y no tapa el panel de búsqueda ni la leyenda. */
 .weather-panel {
   position: absolute;
-  z-index: 500;
-  left: 1.25rem;
-  bottom: 4.5rem;
-  width: min(19rem, calc(100% - 2.5rem));
-  border: 1px solid rgba(255, 255, 255, 0.88);
-  border-radius: 1rem;
-  padding: 0.85rem 1rem 0.7rem;
-  color: #24364b;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 0.55rem 1.5rem rgba(24, 35, 31, 0.16);
-  backdrop-filter: blur(0.55rem);
+  z-index: 1050;
+  top: 1.25rem;
+  right: calc(1.25rem + 2.75rem + 0.6rem);
 }
+
+.weather-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  border: 1px solid rgba(205, 218, 212, 0.9);
+  border-radius: 999px;
+  padding: 0 0.95rem 0 0.7rem;
+  color: #17382f;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 0.4rem 1.1rem rgba(27, 55, 46, 0.16);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 750;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.weather-pill:hover { background: #ffffff; }
+
+.weather-pill:disabled { cursor: progress; }
+
+.weather-panel.is-open .weather-pill { box-shadow: 0 0.4rem 1.1rem rgba(27, 55, 46, 0.16), 0 0 0 3px rgba(47, 170, 115, 0.3); }
+
+.weather-pill-wind {
+  border-left: 1px solid #dce6e1;
+  padding-left: 0.5rem;
+  color: #4f6460;
+  font-weight: 650;
+}
+
+.weather-icon {
+  width: 1.35rem;
+  height: 1.35rem;
+  flex: none;
+  fill: none;
+  stroke: #5d7283;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.weather-icon-clear,
+.weather-icon .weather-icon-sun { stroke: #e0a100; }
+
+.weather-details {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  width: 16rem;
+  max-width: calc(100vw - 1rem);
+  border: 1px solid rgba(218, 226, 230, 0.9);
+  border-radius: 0.9rem;
+  padding: 0.85rem 1rem 0.75rem;
+  color: #24364b;
+  background: #ffffff;
+  box-shadow: 0 0.6rem 1.6rem rgba(24, 48, 39, 0.18);
+}
+
+.weather-details[hidden] { display: none; }
 
 .weather-panel-header {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
   gap: 0.5rem;
-  margin-bottom: 0.55rem;
 }
 
 .weather-panel-header h2 {
@@ -1659,13 +1713,23 @@ input:focus-visible {
 .weather-observed-time,
 .weather-attribution {
   color: #68788d;
-  font-size: 0.69rem;
+  font-size: 0.7rem;
+}
+
+.weather-sky {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.5rem 0 0.6rem;
+  color: #20394b;
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
 .weather-metrics {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.45rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem 0.75rem;
   margin: 0;
 }
 
@@ -1673,93 +1737,61 @@ input:focus-visible {
 
 .weather-metrics dt {
   color: #718096;
-  font-size: 0.65rem;
+  font-size: 0.66rem;
   font-weight: 700;
 }
 
 .weather-metrics dd {
-  margin: 0.15rem 0 0;
+  margin: 0.12rem 0 0;
   color: #20394b;
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   font-weight: 750;
   line-height: 1.25;
   overflow-wrap: anywhere;
 }
 
-.weather-observed-time { margin: 0.55rem 0 0; }
-
-.weather-extra { margin-top: 0.5rem; }
-
-.weather-extra summary {
-  width: fit-content;
-  color: #176d58;
-  font-size: 0.72rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.weather-extra-metrics {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1rem;
-  margin: 0.45rem 0 0;
-}
-
-.weather-extra-metrics dt {
-  color: #718096;
-  font-size: 0.65rem;
-  font-weight: 700;
-}
-
-.weather-extra-metrics dd {
-  margin: 0.12rem 0 0;
-  color: #20394b;
-  font-size: 0.74rem;
-  font-weight: 750;
-}
+.weather-observed-time { margin: 0.6rem 0 0; }
 
 .weather-attribution {
   display: inline-block;
-  margin-top: 0.5rem;
+  margin-top: 0.3rem;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
 
 .weather-panel-message {
-  margin: 0;
+  margin: 0.5rem 0 0;
   color: #7d3d2f;
   font-size: 0.77rem;
   line-height: 1.4;
 }
 
+/* En pantallas pequeñas el panel de búsqueda ocupa la parte de arriba: la pastilla va debajo del
+   zoom, en la columna derecha, y solo muestra el icono y la temperatura. */
 @media (max-width: 56.24rem) {
   .weather-panel {
-    right: auto;
-    left: 0.65rem;
-    bottom: calc(var(--route-sheet-height, 6.5rem) + max(0.65rem, env(safe-area-inset-bottom)) + 0.45rem);
-    width: min(14rem, calc(100% - 1.3rem));
-    padding: 0.65rem 0.75rem 0.55rem;
+    top: calc(max(0.5rem, env(safe-area-inset-top)) + 2.75rem + 0.5rem + 5.25rem + 0.5rem);
+    right: calc(0.5rem + 0.125rem);
   }
 
-  .weather-panel-header { margin-bottom: 0.4rem; }
-
-  .weather-panel-header h2 { font-size: 0.86rem; }
-
-  .weather-metrics { gap: 0.3rem; }
-
-  .weather-metrics dt { font-size: 0.6rem; }
-
-  .weather-metrics dd { font-size: 0.69rem; }
-
-  .weather-observed-time,
-  .weather-attribution,
-  .weather-extra summary { font-size: 0.63rem; }
-}
-
-@media (max-width: 56.24rem) and (max-height: 30rem) {
-  .weather-panel {
-    bottom: calc(7.2rem + max(0.65rem, env(safe-area-inset-bottom)));
+  .weather-pill {
+    flex-direction: column;
+    justify-content: center;
+    width: calc(40px + 2px);
+    min-height: 3rem;
+    border-radius: 0.75rem;
+    padding: 0.25rem 0;
+    gap: 0.1rem;
+    font-size: 0.66rem;
+    line-height: 1;
   }
+
+  .weather-pill .weather-icon {
+    width: 1.2rem;
+    height: 1.2rem;
+  }
+
+  .weather-pill-wind { display: none; }
 }
 
 .location-marker-icon {

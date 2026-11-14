@@ -5,7 +5,6 @@ import { MapClickHandler } from './MapClickHandler.jsx';
 import { MapFocusHandler } from './MapFocusHandler.jsx';
 import { NavigationMarker } from './NavigationMarker.jsx';
 import { RouteLayer } from './RouteLayer.jsx';
-import { WeatherPanel } from '../weather/WeatherPanel.jsx';
 import { MAP_BOUNDS, MAP_MIN_ZOOM } from './zaragozaArea.js';
 
 const ZARAGOZA_CENTER = [41.6488, -0.8891];
@@ -60,7 +59,6 @@ export function MapView({
           onUserDrag={onNavigationDrag}
         />
       </MapContainer>
-      <WeatherPanel />
       <div className="map-selection-hint" aria-live="polite">
         Toca el mapa para fijar el {activePoint === 'origin' ? 'origen' : 'destino'}.
       </div>
