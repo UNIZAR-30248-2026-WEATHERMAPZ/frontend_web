@@ -43,9 +43,7 @@ describe('RouteComparisonPanel with wind (PBI-8.2)', () => {
     expect(screen.getByText('92 % de exposición al viento')).toBeInTheDocument();
     expect(screen.getByText('38 % de exposición al viento')).toBeInTheDocument();
     expect(screen.queryByText(/sombra/)).not.toBeInTheDocument();
-    expect(
-      screen.getByText('Cierzo añade 2 min y tiene 54 puntos menos de exposición al viento.')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Cierzo añade 2 min.')).toBeInTheDocument();
   });
 
   it('sums up shade and wind when both count', () => {
@@ -67,9 +65,8 @@ describe('RouteComparisonPanel with wind (PBI-8.2)', () => {
     expect(screen.getByRole('button', { name: /Con sombra/ })).toHaveTextContent(
       '70 % de sombra40 % de exposición al viento'
     );
-    expect(
-      screen.getByText(/50 puntos más de sombra y 20 puntos menos de exposición al viento/)
-    ).toBeInTheDocument();
+    // What changes is explained in percentages by the comfort breakdown (PBI-11), never in points.
+    expect(screen.queryByText(/puntos/)).not.toBeInTheDocument();
   });
 });
 
@@ -246,9 +243,7 @@ describe('RouteComparisonPanel', () => {
     );
 
     expect(screen.getByRole('button', { name: /Soleada/ })).toHaveAttribute('aria-pressed', 'true');
-    expect(
-      screen.getByText(/Soleada añade 1 min y tiene 70 puntos menos de sombra/)
-    ).toBeInTheDocument();
+    expect(screen.getByText('Soleada añade 1 min.')).toBeInTheDocument();
   });
 
   it('explains when the sun is too low to estimate shade', () => {
@@ -326,9 +321,7 @@ describe('RouteComparisonPanel with the green (PBI-10 phase B)', () => {
     expect(screen.getByText('3 % verde')).toBeInTheDocument();
     expect(screen.getByText('72 % verde')).toBeInTheDocument();
     expect(screen.queryByText(/sombra/)).not.toBeInTheDocument();
-    expect(
-      screen.getByText('Parques añade 2 min y tiene 69 puntos más de verde.')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Parques añade 2 min.')).toBeInTheDocument();
   });
 
   it('says nothing about the green when it was not calculated', () => {

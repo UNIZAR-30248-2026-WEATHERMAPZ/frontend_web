@@ -7,6 +7,12 @@ export function formatRouteDuration(durationInSeconds) {
   return `${minutes} min`;
 }
 
+// Extra time of an alternative: in seconds under a minute, so "25 s" is not shown as "1 min".
+export function formatExtraDuration(seconds) {
+  if (!(seconds > 0)) return '0 s';
+  return seconds < 60 ? `${Math.round(seconds)} s` : formatRouteDuration(seconds);
+}
+
 export function formatRouteDistance(distanceInMetres) {
   if (distanceInMetres < 1000) {
     return `${Math.round(distanceInMetres)} m`;
