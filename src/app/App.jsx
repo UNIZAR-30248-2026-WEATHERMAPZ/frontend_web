@@ -21,6 +21,7 @@ import { useRoutePlanner } from '../features/routing/useRoutePlanner.js';
 import { RouteSearchPanel } from '../features/route-search/RouteSearchPanel.jsx';
 import { useDeviceLocation } from '../features/route-search/useDeviceLocation.js';
 import { useRoutePoints } from '../features/route-search/useRoutePoints.js';
+import { WeatherPanel } from '../features/weather/WeatherPanel.jsx';
 
 const ignoreMapPoint = () => {};
 
@@ -104,6 +105,7 @@ export function App({ userMenu = null }) {
   return (
     <AppShell
       userMenu={userMenu}
+      weather={<WeatherPanel />}
       map={
         <MapView
           activePoint={routePoints.activePoint}
