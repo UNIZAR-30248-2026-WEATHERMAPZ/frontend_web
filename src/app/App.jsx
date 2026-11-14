@@ -202,13 +202,21 @@ export function App({ userMenu = null }) {
                       onSelectRoute={setShownRoute}
                       {...collapse}
                     />
+                    <ComfortSummary
+                      comparison={routePlanner.comparison}
+                      selectedRouteType={selectedRouteType}
+                      alternativeLabel={alternativeLabel}
+                      weights={
+                        isRecommended
+                          ? routePlanner.comparison.recommendation?.weights
+                          : profile?.weights
+                      }
+                      isExpanded={collapse.isExpanded}
+                    />
                   </>
                 ) : null
               }
             />
-            <div className="future-panels">
-              <ComfortSummary />
-            </div>
           </>
         )
       }

@@ -1,4 +1,8 @@
-import { formatRouteDistance, formatRouteDuration } from '../routing/RouteSummary.jsx';
+import {
+  formatExtraDuration,
+  formatRouteDistance,
+  formatRouteDuration,
+} from '../routing/RouteSummary.jsx';
 
 const statusMessages = {
   no_better_alternative:
@@ -40,26 +44,6 @@ const routeFactors = (route) =>
 
 function RouteFactors({ route }) {
   return routeFactors(route).map((factor) => <span key={factor}>{factor}</span>);
-}
-
-function pointsChange(points, what) {
-  const rounded = Math.round(points);
-  return `${Math.abs(rounded)} puntos ${rounded >= 0 ? 'más' : 'menos'} de ${what}`;
-}
-
-// What the chosen route changes: shade, wind or both, whatever the weights compared.
-function changesSummary(comparison) {
-  const changes = [];
-  if (Number.isFinite(comparison.shadeImprovementPercentagePoints)) {
-    changes.push(pointsChange(comparison.shadeImprovementPercentagePoints, 'sombra'));
-  }
-  if (Number.isFinite(comparison.windChangePoints)) {
-    changes.push(pointsChange(comparison.windChangePoints, 'exposición al viento'));
-  }
-  if (Number.isFinite(comparison.greenChangePercentagePoints)) {
-    changes.push(pointsChange(comparison.greenChangePercentagePoints, 'verde'));
-  }
-  return changes.join(' y ');
 }
 
 function RouteTimeAndDistance({ route }) {
@@ -150,8 +134,8 @@ export function RouteComparisonPanel({
       </div>
       {comparison.status === 'selected' ? (
         <p className={resultClass}>
-          {alternativeLabel} añade {formatRouteDuration(comparison.additionalDurationSeconds)}
-          {changesSummary(comparison) ? ` y tiene ${changesSummary(comparison)}` : ''}.
+          {/* What it changes is explained, in percentages, in the comfort breakdown (PBI-11). */}
+          {alternativeLabel} añade {formatExtraDuration(comparison.additionalDurationSeconds)}.
         </p>
       ) : (
         <p className={resultClass} role="status">

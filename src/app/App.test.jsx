@@ -636,9 +636,14 @@ describe('App', () => {
         'Sombra 50 %'
       );
       expect(screen.getByText(/Tiempo usado \(dato de las 13:00\): 30 °C/)).toBeInTheDocument();
+      expect(screen.getByText('Recomendada añade 1 min.')).toBeInTheDocument();
+      // The comfort breakdown (PBI-11) explains the recommended route with the weights applied.
       expect(
-        screen.getByText(/Recomendada añade 1 min y tiene 70 puntos más de sombra/)
-      ).toBeInTheDocument();
+        screen.getByRole('heading', { name: 'Confort de la ruta «Recomendada»' })
+      ).toBeVisible();
+      expect(screen.getByText(/«Recomendada» va a la sombra el \d+ % del recorrido/)).toHaveClass(
+        'is-asked'
+      );
       expect(screen.getByTestId('route-geometry')).toHaveTextContent(
         JSON.stringify(shaded.geometry.coordinates)
       );

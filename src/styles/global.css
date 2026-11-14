@@ -1268,7 +1268,84 @@ input:focus-visible {
   font-weight: 750;
 }
 
-.future-panels { display: none; }
+/* PBI-11: desglose del confort de la ruta mostrada y por qué se ha elegido. */
+.comfort-summary {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: 0.5rem;
+  border-top: 1px solid #dfe9e4;
+  padding-top: 0.75rem;
+}
+
+.comfort-summary h2 {
+  margin: 0;
+  color: #17382f;
+  font-size: 0.92rem;
+}
+
+.comfort-bars { display: grid; gap: 0.55rem; }
+
+.comfort-bar-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  color: #31485a;
+  font-size: 0.78rem;
+  font-weight: 650;
+}
+
+.comfort-bar-track {
+  position: relative;
+  height: 0.5rem;
+  margin-top: 0.25rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e6eeea;
+}
+
+.comfort-bar-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: inherit;
+  background: #2f8f6a;
+}
+
+/* Sombra a la izquierda (relleno) y sol a la derecha (fondo), como la barra del editor. */
+.comfort-bar-shade-sun { background: #f4c74f; }
+.comfort-bar-shade-sun .comfort-bar-fill { border-radius: 0; background: #4f6f8f; }
+
+.comfort-bar-hint {
+  margin: 0.2rem 0 0;
+  color: #68788d;
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+
+.comfort-why-title {
+  margin: 0.2rem 0 0;
+  color: #17382f;
+  font-size: 0.82rem;
+}
+
+.comfort-why {
+  display: grid;
+  gap: 0.3rem;
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #31485a;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.comfort-why li.is-asked { color: #17382f; font-weight: 700; }
+
+.comfort-why-text,
+.comfort-empty {
+  margin: 0;
+  color: #31485a;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
 
 .route-comparison {
   display: grid;
@@ -2212,6 +2289,10 @@ input:focus-visible {
   .route-actions:has(.route-steps.is-open) .recommendation-card { display: none; }
 
   /* Comparación plegada: una línea con la ruta elegida. Para cambiar de ruta, "Ver más". */
+  /* El desglose del confort (PBI-11) solo con "Ver más" y sin el recorrido abierto. */
+  .comfort-summary.is-collapsed,
+  .route-actions:has(.route-steps.is-open) .comfort-summary { display: none; }
+
   .route-comparison.is-collapsed .comparison-routes,
   .route-comparison.is-collapsed .comparison-result:not(.comparison-result-important) { display: none; }
 
@@ -2894,7 +2975,8 @@ input:focus-visible {
 /* Pantallas muy bajas (móvil en horizontal): el panel abierto y la comparación no caben a la vez. */
 @media (max-width: 56.24rem) and (max-height: 30rem) {
   .route-search-panel:not(.is-collapsed) .route-comparison,
-  .route-search-panel:not(.is-collapsed) .recommendation-card { display: none; }
+  .route-search-panel:not(.is-collapsed) .recommendation-card,
+  .route-search-panel:not(.is-collapsed) .comfort-summary { display: none; }
 
   .control-panel:has(.route-search-panel:not(.is-collapsed)) {
     max-height: calc(100dvh - var(--route-sheet-height, 6.5rem) - 1.75rem);

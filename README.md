@@ -246,14 +246,35 @@ usa con el peso de vegetación (ADR-031: ver DECISIONS.md en la carpeta docs del
   del Sol, así que también funciona de noche.
 - La tarjeta de la ruta muestra la hoja y "Verde N %"; también en "Ver todas".
 - Al calcular, cada tarjeta de la comparación muestra su "N % verde" (cuando pesan el verde, la
-  sombra o el sol), el resumen añade "N puntos más de verde" y el resumen de la ruta, una métrica
-  "Verde".
+  sombra o el sol), el desglose del confort (PBI-11) explica el verde en porcentajes y el resumen
+  de la ruta tiene una métrica "Verde".
 - La tarjeta del motivo de la ruta recomendada tiene la fila "Verde", a 0 %: la recomendación aún
   no pesa el verde.
 - Prueba real del 2026-11-12 con Playwright y Chrome a 390, 320 y 1366 px: una ruta "Parques" solo
   con verde al 100 %, de Plaza del Pilar a Plaza San Francisco, elige una alternativa de 31 min con
   el 50 % verde frente a la rápida de 31 min con el 31 % ("añade 1 min y tiene 19 puntos más de
   verde"). Sin scroll horizontal, barra de 44 px en el móvil y todo con el teclado.
+
+## Comprobaciones de la PBI-11 (desglose del confort)
+
+Tras calcular una ruta con pesos o la recomendada, debajo de la comparación aparece "Confort de la
+ruta …". Solo presenta lo que devuelve el backend; no calcula nada.
+
+- Barras con su texto (no solo color): "Sombra N % · Sol N %" (si se ha calculado la sombra),
+  "Exposición al viento N %" con la explicación de la escala, y "Junto a árboles o parques N %".
+  Son las de la ruta que se está viendo: al pulsar "Más rápida" o la alternativa, cambian.
+- "Por qué esta ruta" explica la alternativa frente a la más rápida con los dos porcentajes
+  ("«Sombreada» va a la sombra el 91 % del recorrido, frente al 72 % de la más rápida") y nunca en
+  "puntos". Lo pedido (los pesos de la ruta o de la recomendada) va primero y en negrita; con sol
+  se explica el sol en vez de la sombra; un factor que no cambia no se menciona.
+- El tiempo extra va en segundos si es menos de un minuto ("tarda 44 s más"); los minutos de cada
+  ruta solo se dan si son distintos. La frase de la comparación queda en "X añade 44 s.".
+- Sin alternativa que mejore, explica que la mejor opción es la más rápida; sin datos, lo dice.
+- En el móvil el desglose se pliega con la comparación ("Ver más") y se oculta con el recorrido
+  abierto; en escritorio se ve siempre.
+- Prueba real del 2026-11-14 con Playwright y Chrome a 1366 y 390 px: "Sombreada" a las 12:00 de
+  Puerta del Carmen a Plaza del Pilar: 91 % de sombra frente al 72 %, 22 % verde frente al 28 % y
+  44 s más.
 
 ## Comprobaciones de Iniciar ruta
 
