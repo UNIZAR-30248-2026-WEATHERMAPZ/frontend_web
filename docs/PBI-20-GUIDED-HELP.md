@@ -48,3 +48,13 @@ permanece abierta y muestra el error para que el usuario pueda reintentarlo.
   backend `npm run ci` (65 suites, 770 tests superados); integración PostgreSQL (1 suite, 1 test).
 - Accesos de favoritos y del último paso meteorológico: `src/app/App.test.jsx`,
   `src/features/auth/UserMenu.test.jsx` y `src/features/weather/WeatherPanel.test.jsx`.
+
+## Cambios con la PBI-19
+
+- El paso «Calcula y compara» enseña el resultado nuevo (título con los minutos, motivos con calles y
+  zonas verdes, tarjetas con «Poco / Algo / Mucho» y «Ver detalle») con rutas de ejemplo.
+- En un ordenador (pantalla grande y ratón) no se ofrece «Iniciar ruta»: el paso de la navegación pasa
+  a ser «Revisa el recorrido».
+- Con una ruta calculada las preguntas están en el desplegable «Cambiar preferencias»; durante el
+  tutorial se muestran en la hoja para que sus pasos las señalen.
+- Los botones del paso quedan fijos abajo aunque la tarjeta se desplace.

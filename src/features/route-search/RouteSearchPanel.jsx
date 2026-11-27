@@ -394,10 +394,20 @@ export function RouteSearchPanel({
   // the sketches; calculating a route folds them too so the result and the map are seen.
   const [isSheetFolded, setIsSheetFolded] = useState(false);
   const panelOpen = guidedTourActive || isMobilePanelOpen;
+  // The handle folds the questions (without a route) or the result, leaving its title and the buttons
+  // (with one), so more map is seen.
   const sheetFolded = guidedTourActive ? false : isSheetFolded;
   const routeActionsRef = useRef(null);
+  // The drag of the handle of the bottom sheet, if any.
+  const handleDragRef = useRef(null);
 
   useSheetHeight(routeActionsRef);
+
+  // A new result starts at the top of the sheet, with its title in view.
+  const shownResult = routeCalculation.comparison ?? routeCalculation.route;
+  useEffect(() => {
+    if (shownResult && routeActionsRef.current) routeActionsRef.current.scrollTop = 0;
+  }, [shownResult]);
 
   function toggleMobilePanel() {
     setSheetDetail(null);
@@ -406,10 +416,40 @@ export function RouteSearchPanel({
 
   function toggleSheetDetail(detail) {
     setIsMobilePanelOpen(false);
-    setIsSheetFolded(true);
+    setIsSheetFolded(false);
     setSheetDetail((current) => (current === detail ? null : detail));
   }
   const displayedRoute = routeCalculation.activeRoute || routeCalculation.route;
+  // The questions and the date. Without a result they are in the sheet (on small screens, next to
+  // «Calcular ruta», as in the sketches); with one, they are the dropdown «Cambiar preferencias».
+  const hasResult = Boolean(routeCalculation.comparison || displayedRoute);
+  const preferencesBlock = (
+    <>
+      <div data-tour="preferences">{preferences}</div>
+      {asksSolarDateTime && (
+        <div className="solar-date-time" aria-label="Momento para estimar la sombra">
+          <label>
+            Fecha
+            <input
+              type="date"
+              value={solarDate}
+              required
+              onChange={(event) => onSolarDateChange(event.target.value)}
+            />
+          </label>
+          <label>
+            Hora
+            <input
+              type="time"
+              value={solarTime}
+              required
+              onChange={(event) => onSolarTimeChange(event.target.value)}
+            />
+          </label>
+        </div>
+      )}
+    </>
+  );
   // With the shaded type chosen but only the fastest route calculated, there is still a calculation
   // to do.
   const canStartRoute =
@@ -488,37 +528,45 @@ export function RouteSearchPanel({
             type="button"
             className="sheet-handle"
             aria-expanded={!sheetFolded}
-            aria-label={sheetFolded ? 'Mostrar preferencias' : 'Ocultar preferencias'}
-            onClick={() => setIsSheetFolded((folded) => !folded)}
+            aria-label={
+              hasResult
+                ? `${sheetFolded ? 'Mostrar' : 'Ocultar'} detalles de la ruta`
+                : `${sheetFolded ? 'Mostrar' : 'Ocultar'} preferencias`
+            }
+            onClick={() => {
+              // A drag already folded or unfolded it: the click that follows must not undo it.
+              if (handleDragRef.current?.moved) {
+                handleDragRef.current = null;
+                return;
+              }
+              setIsSheetFolded((folded) => !folded);
+            }}
+            onPointerDown={(event) => {
+              handleDragRef.current = { y: event.clientY, moved: false };
+              // Keeps the finger on the handle while dragging out of it.
+              event.currentTarget.setPointerCapture?.(event.pointerId);
+            }}
+            onPointerMove={(event) => {
+              const drag = handleDragRef.current;
+              if (!drag || drag.moved) return;
+              const dy = event.clientY - drag.y;
+              // Dragged down folds the sheet; up unfolds it.
+              if (Math.abs(dy) >= 24) {
+                drag.moved = true;
+                setIsSheetFolded(dy > 0);
+              }
+            }}
+            onPointerCancel={() => {
+              handleDragRef.current = null;
+            }}
           >
             <span aria-hidden="true" />
           </button>
           {/* The questions and the date go in the bottom sheet on small screens, next to «Calcular
               ruta», as in the sketches; on large screens this box adds nothing and the order is the
               same as before. */}
-          <div data-tour="preferences">{preferences}</div>
-          {asksSolarDateTime && (
-            <div className="solar-date-time" aria-label="Momento para estimar la sombra">
-              <label>
-                Fecha
-                <input
-                  type="date"
-                  value={solarDate}
-                  required
-                  onChange={(event) => onSolarDateChange(event.target.value)}
-                />
-              </label>
-              <label>
-                Hora
-                <input
-                  type="time"
-                  value={solarTime}
-                  required
-                  onChange={(event) => onSolarTimeChange(event.target.value)}
-                />
-              </label>
-            </div>
-          )}
+          {/* With a result the questions are a dropdown of it («Cambiar preferencias», PBI-19). */}
+          {(!hasResult || guidedTourActive) && preferencesBlock}
           <div className="map-guidance">
             <p>También puedes marcar el origen y el destino tocando directamente el mapa.</p>
             <p className={`active-map-target active-map-target-${activePoint}`}>
@@ -578,9 +626,11 @@ export function RouteSearchPanel({
               title={showsAlternative ? alternativeLabel : 'La más rápida'}
             />
           )}
+          {/* «Cambiar preferencias», «Ver detalle» and «Recorrido»: only one open at a time. */}
           {renderComparison?.({
-            isExpanded: sheetDetail === 'comparison',
-            onToggleExpanded: () => toggleSheetDetail('comparison'),
+            openSection: sheetDetail,
+            onToggleSection: toggleSheetDetail,
+            preferences: guidedTourActive ? null : preferencesBlock,
           })}
           {displayedRoute && (
             <RouteSteps
@@ -629,7 +679,7 @@ export function RouteSearchPanel({
                     // On mobile the open search panel covers most of the map; fold it so the route
                     // is visible. The toggle (and this state) only has an effect on small screens.
                     setIsMobilePanelOpen(false);
-                    setIsSheetFolded(true);
+                    setIsSheetFolded(false);
                     setSheetDetail(null);
                     onCalculateRoute();
                   }}

@@ -32,7 +32,7 @@ describe('RouteSummary', () => {
     );
 
     expect(screen.getByRole('heading', { name: 'Ruta Sombreada' })).toBeInTheDocument();
-    expect(screen.getByText('74 %')).toBeInTheDocument();
+    expect(screen.getByText('Mucha sombra')).toBeInTheDocument();
   });
 });
 
@@ -42,7 +42,7 @@ describe('RouteSummary with the green (PBI-10 phase B)', () => {
       <RouteSummary distance={1200} duration={900} greenPercentage={71.6} />
     );
 
-    expect(screen.getByText('Verde').nextSibling).toHaveTextContent('72 %');
+    expect(screen.getByText('Verde').nextSibling).toHaveTextContent('Mucho verde');
 
     rerender(<RouteSummary distance={1200} duration={900} />);
     expect(screen.queryByText('Verde')).not.toBeInTheDocument();

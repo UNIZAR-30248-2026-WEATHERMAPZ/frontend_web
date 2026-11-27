@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import { RouteComparisonPanel } from '../route-comparison/RouteComparisonPanel.jsx';
+import { RouteResult } from '../route-comparison/RouteResult.jsx';
 
 // The steps of the guided tour (PBI-20). `include` adds another element to the highlighted area (the
 // weather details, which open below the pill); a step with `demo` shows a simulated result instead of
@@ -34,7 +34,7 @@ export const TOUR_STEPS = [
     id: 'compare',
     demo: true,
     title: 'Calcula y compara',
-    text: 'Al pulsar «Calcular ruta» verás algo así: la ruta más rápida y la que mejor encaja con tus preferencias, con sus minutos, distancia, sombra, viento y verde. Toca una de las dos para verla en el mapa. Pruébalo aquí:',
+    text: 'Al calcular verás algo así: tu ruta, cuánto tarda y por qué te conviene. Las tarjetas la comparan con la más rápida (tócalas) y en «Ver detalle» están los datos. Pruébalo:',
   },
   {
     id: 'start-navigation',
@@ -42,6 +42,10 @@ export const TOUR_STEPS = [
     fallback: '[data-tour="calculate-route"]',
     title: 'Empieza la navegación',
     text: 'Después de calcular, este botón cambia a «Iniciar ruta». Al pulsarlo, la navegación GPS te guía con indicaciones y tu posición en el mapa.',
+    // On a computer there is no GPS navigation (global.css): the steps of the route instead.
+    desktopTitle: 'Revisa el recorrido',
+    desktopText:
+      'Después de calcular, en «Recorrido» tienes las calles y las indicaciones paso a paso; al tocar un paso se resalta en el mapa. Para que la app te guíe por GPS mientras caminas, ábrela en el móvil.',
   },
   {
     id: 'current-weather',
@@ -66,9 +70,27 @@ export const TOUR_STEPS = [
   },
 ];
 
-// A simulated result for the «Calcula y compara» step: the real comparison with example routes.
+// A simulated result for the «Calcula y compara» step: the real result (PBI-19) with example routes.
 const DEMO_COMPARISON = {
   status: 'selected',
+  preferences: { sunShade: 'shade', avoidWind: false, preferParks: true, extraMinutes: 5 },
+  strategy: { maximumExtraMinutes: 5 },
+  explanation: {
+    status: 'selected',
+    sunShade: {
+      status: 'available',
+      kind: 'shade',
+      streets: [{ street: 'Calle Alfonso I' }],
+      instead: { street: 'Calle del Coso' },
+    },
+    parks: {
+      status: 'available',
+      named: ['Parque Pignatelli'],
+      moreNamedCount: 0,
+      unnamedCount: 2,
+    },
+    suggestion: null,
+  },
   fastest: {
     duration: 900,
     distance: 1200,
@@ -88,12 +110,17 @@ const DEMO_COMPARISON = {
 
 function ComparisonDemo() {
   const [selected, setSelected] = useState('shaded');
+  const [openSection, setOpenSection] = useState(null);
   return (
     <div className="guided-tour-demo">
-      <RouteComparisonPanel
+      <RouteResult
         comparison={DEMO_COMPARISON}
         selectedRouteType={selected}
         onSelectRoute={setSelected}
+        openSection={openSection}
+        onToggleSection={(section) =>
+          setOpenSection((current) => (current === section ? null : section))
+        }
       />
       <p className="guided-tour-demo-note">Ejemplo: las cifras no son de una ruta real.</p>
     </div>
@@ -121,6 +148,12 @@ export function GuidedTour({ step, onPrevious, onNext, onSkip, saving = false, e
   const stepInfo = TOUR_STEPS[step];
   const target = stepInfo.demo ? null : boundsOf(stepInfo).target;
   const isDesktop = window.innerWidth >= 1100;
+  // The same rule as global.css for hiding «Iniciar ruta» on a computer.
+  const isComputer =
+    window.matchMedia?.('(min-width: 56.25rem) and (hover: hover) and (pointer: fine)').matches ??
+    false;
+  const title = (isComputer && stepInfo.desktopTitle) || stepInfo.title;
+  const text = (isComputer && stepInfo.desktopText) || stepInfo.text;
   const cardWidth = Math.min(544, window.innerWidth * 0.42);
   const cardHeight = 440;
   const placeRight = rect ? rect.left + rect.width / 2 < window.innerWidth / 2 : true;
@@ -221,8 +254,8 @@ export function GuidedTour({ step, onPrevious, onNext, onSkip, saving = false, e
             {saving ? 'Guardando…' : 'Saltar tutorial'}
           </button>
         </div>
-        <h2 id="guided-tour-title">{stepInfo.title}</h2>
-        <p id="guided-tour-description">{stepInfo.text}</p>
+        <h2 id="guided-tour-title">{title}</h2>
+        <p id="guided-tour-description">{text}</p>
         {stepInfo.demo && <ComparisonDemo />}
         {error && (
           <p role="alert" className="form-message-error">

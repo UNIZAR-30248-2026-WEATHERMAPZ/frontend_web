@@ -505,8 +505,12 @@ describe('RouteSearchPanel', () => {
     const user = userEvent.setup();
     render(
       <RouteSearchPanel
-        renderComparison={({ isExpanded, onToggleExpanded }) => (
-          <button type="button" aria-expanded={isExpanded} onClick={onToggleExpanded}>
+        renderComparison={({ openSection, onToggleSection }) => (
+          <button
+            type="button"
+            aria-expanded={openSection === 'detail'}
+            onClick={() => onToggleSection('detail')}
+          >
             Detalle
           </button>
         )}
@@ -860,5 +864,27 @@ describe('RouteSearchPanel', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Mostrar preferencias' }));
     expect(sheet).not.toHaveClass('is-folded');
+  });
+
+  it('with a result the questions are its dropdown «Cambiar preferencias», not the sheet', () => {
+    const received = [];
+    render(
+      <RouteSearchPanel
+        preferences={<p>Preguntas</p>}
+        routeCalculation={{
+          status: 'success',
+          errorMessage: '',
+          comparison: { status: 'selected' },
+          route: { distance: 100, duration: 60, steps: [] },
+        }}
+        renderComparison={(sections) => {
+          received.push(sections);
+          return <div>Resultado</div>;
+        }}
+      />
+    );
+    expect(screen.queryByText('Preguntas')).not.toBeInTheDocument();
+    expect(received.at(-1).preferences).toBeTruthy();
+    expect(received.at(-1).openSection).toBeNull();
   });
 });

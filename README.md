@@ -209,6 +209,24 @@ cambia nada.
 - Al calcular, el panel se pliega y la hoja solo enseña el resultado; «Ruta» vuelve a mostrar las
   preguntas.
 
+## Comprobaciones de la PBI-19 (explicación en lenguaje claro)
+
+El resultado sigue los bocetos «Resultado explicado» y «Ver detalle» (propuesta de la GUI), en móvil
+y escritorio, con el `explanation` del backend (ADR-038). Código: `RouteResult.jsx`,
+`comfortLevels.js`, `explanationTexts.js` y `LevelBar.jsx` en `src/features/route-comparison/`.
+
+- Cabecera «Tu ruta · 16 min» y «1 min más que la más rápida · 1,3 km».
+- Por qué, con un icono por motivo y el principio en negrita: «**Vas a la sombra** por Calle Alfonso
+  I…», «**Evitas el viento de cara** de…», «**Pasas junto a estas zonas verdes**: …». Sin calles
+  verificables (o con una ruta del asistente) compara en palabras.
+- Dos tarjetas («Más rápida · 15 min» y «Tu ruta · 16 min») con lo pedido: «Sombra ●●● Mucha»,
+  «Viento ●○○ Poco»… sin números (tercios de 0-100, provisionales). Tocar una la enseña en el mapa.
+- En el móvil, «Línea verde: tu ruta · Línea gris discontinua: la más rápida».
+- «Ver detalle» despliega «Los datos calculados»: sombra, viento (0-100), verde, duración y distancia
+  de las dos rutas.
+- Sin ruta mejor: «No hay ningún camino con más sombra sin andar más de 5 min.» y el botón «Probar con
+  +10 min», que cambia los minutos y vuelve a calcular; otra hora u otra preferencia, en palabras.
+
 ## Comprobaciones de la PBI-21 («Según el tiempo de hoy»)
 
 El tiempo de ahora marca las preguntas de la PBI-18 y explica por qué (ADR-037: ver DECISIONS.md en

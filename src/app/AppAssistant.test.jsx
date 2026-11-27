@@ -241,7 +241,9 @@ describe('App with the route assistant', () => {
     const changes = screen.getByRole('list', { name: 'Cambios de Cierzo' });
     expect(within(changes).getByText('Me da igual → Sombra')).toBeInTheDocument();
     expect(within(changes).getByText('La más rápida → +15 min')).toBeInTheDocument();
-    expect(screen.getByText('70 % de sombra')).toBeInTheDocument();
+    expect(
+      within(screen.getByRole('button', { name: /Tu ruta/ })).getByText('Mucha')
+    ).toBeInTheDocument();
   });
 
   it('a second request starts from the answers the assistant applied', async () => {
@@ -351,7 +353,9 @@ describe('App with the route assistant', () => {
     // The route on screen stays: it already is the route of those answers.
     expect(shownGeometry()).toBe(JSON.stringify(SHADED.geometry.coordinates));
     await user.keyboard('{Escape}');
-    expect(screen.getByText('Sombra · +15 min')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Cambiar preferencias' }));
+    expect(screen.getByRole('radio', { name: 'Sombra' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: '+15 minutos' })).toBeChecked();
   });
 
   it('with «Según el tiempo de hoy» starts from the answers the weather marked (PBI-21)', async () => {

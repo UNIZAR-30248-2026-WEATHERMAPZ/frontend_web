@@ -1,3 +1,5 @@
+import { levelText } from '../route-comparison/comfortLevels.js';
+
 const distanceFormatter = new Intl.NumberFormat('es-ES', {
   maximumFractionDigits: 1,
 });
@@ -67,14 +69,14 @@ export function RouteSummary({
           <div className="route-summary-metric route-summary-shade">
             <span aria-hidden="true">☂</span>
             <dt>Sombra</dt>
-            <dd>{Math.round(shadePercentage)} %</dd>
+            <dd>{levelText('shade', shadePercentage)}</dd>
           </div>
         )}
         {Number.isFinite(greenPercentage) && (
           <div className="route-summary-metric route-summary-green">
             <span aria-hidden="true">❦</span>
             <dt>Verde</dt>
-            <dd>{Math.round(greenPercentage)} %</dd>
+            <dd>{levelText('green', greenPercentage)}</dd>
           </div>
         )}
         <div className="route-summary-metric">

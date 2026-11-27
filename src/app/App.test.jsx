@@ -378,7 +378,8 @@ describe('App', () => {
       { signal: expect.any(AbortSignal) }
     );
     expect(await screen.findByText('0 min')).toBeInTheDocument();
-    expect(screen.getByText('0 m')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'La más rápida · 0 min' })).toBeInTheDocument();
+    expect(screen.getAllByText('0 m')[0]).toBeInTheDocument();
     expect(screen.getByTestId('route-geometry')).toHaveTextContent(
       JSON.stringify([
         [-0.89, 41.65],
@@ -552,16 +553,19 @@ describe('App', () => {
       }),
       { signal: expect.any(AbortSignal) }
     );
-    expect(await screen.findByText('70 % de sombra')).toBeInTheDocument();
+    expect(
+      within(await screen.findByRole('button', { name: /Tu ruta/ })).getByText('Mucha')
+    ).toBeInTheDocument();
     expect(screen.getByTestId('route-geometry')).toHaveTextContent(
       JSON.stringify(shaded.geometry.coordinates)
     );
-    await user.click(screen.getByRole('button', { name: /La más rápida 10 min/ }));
+    await user.click(screen.getByRole('button', { name: /^Más rápida · 10 min/ }));
     expect(screen.getByTestId('route-geometry')).toHaveTextContent(
       JSON.stringify(fastest.geometry.coordinates)
     );
-    // Showing the fastest one does not change the answers: the summary still says them.
-    expect(screen.getByText('Sombra · +5 min')).toBeInTheDocument();
+    // Showing the fastest one does not change the answers: «Cambiar preferencias» still has them.
+    await user.click(screen.getByRole('button', { name: 'Cambiar preferencias' }));
+    expect(screen.getByRole('radio', { name: 'Sombra' })).toBeChecked();
   });
 
   describe('simple preferences (PBI-18)', () => {
@@ -699,9 +703,13 @@ describe('App', () => {
       await choosePoints(user);
       await user.click(screen.getByRole('button', { name: 'Calcular ruta' }));
 
-      expect(await screen.findByText('Sol · Por parques · +10 min')).toBeInTheDocument();
+      // With the result the questions fold into its dropdown «Cambiar preferencias» (PBI-19).
+      expect(await screen.findByRole('button', { name: 'Cambiar preferencias' })).toHaveAttribute(
+        'aria-expanded',
+        'false'
+      );
       expect(screen.queryByRole('radio', { name: 'Sol' })).not.toBeInTheDocument();
-      expect(screen.getAllByText(/ninguno sin andar más de 10 min extra/)[0]).toBeInTheDocument();
+      expect(screen.getAllByText(/pero todos tardan más de 10 min extra/)[0]).toBeInTheDocument();
       await user.click(screen.getByRole('button', { name: 'Cambiar preferencias' }));
       expect(screen.getByRole('radio', { name: 'Sol' })).toBeChecked();
       // Opening them does not lose the route; changing an answer does.

@@ -61,12 +61,18 @@ describe('GuidedTour', () => {
     const user = userEvent.setup();
     renderStep('compare');
     const dialog = screen.getByRole('dialog', { name: 'Calcula y compara' });
-    expect(within(dialog).getByRole('heading', { name: 'Comparación' })).toBeInTheDocument();
+    // The real result of PBI-19 with example routes: title, reasons, cards and «Ver detalle».
+    expect(within(dialog).getByRole('heading', { name: 'Tu ruta · 16 min' })).toBeInTheDocument();
     expect(within(dialog).getByText(/las cifras no son de una ruta real/)).toBeInTheDocument();
-    const fastest = within(dialog).getByRole('button', { name: /La más rápida/ });
+    expect(within(dialog).getByRole('list', { name: 'Por qué esta ruta' })).toHaveTextContent(
+      'Vas a la sombra por Calle Alfonso I'
+    );
+    const fastest = within(dialog).getByRole('button', { name: /^Más rápida/ });
     expect(fastest).toHaveAttribute('aria-pressed', 'false');
     await user.click(fastest);
     expect(fastest).toHaveAttribute('aria-pressed', 'true');
+    await user.click(within(dialog).getByRole('button', { name: 'Ver detalle' }));
+    expect(within(dialog).getByRole('table')).toBeInTheDocument();
   });
 
   it('points at the profile for the favourites and to repeat the tutorial, which ends the tour', () => {

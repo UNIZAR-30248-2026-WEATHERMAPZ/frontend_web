@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { AppShell } from '../components/layout/AppShell.jsx';
-import { ComfortSummary } from '../features/comfort-summary/ComfortSummary.jsx';
 import { MapView } from '../features/map/MapView.jsx';
 import { isInsideZaragoza, OUTSIDE_ZARAGOZA_MESSAGE } from '../features/map/zaragozaArea.js';
 import { AssistantFab } from '../features/route-assistant/AssistantFab.jsx';
 import { RouteAssistant } from '../features/route-assistant/RouteAssistant.jsx';
 import { useRouteAssistant } from '../features/route-assistant/useRouteAssistant.js';
-import { RouteComparisonPanel } from '../features/route-comparison/RouteComparisonPanel.jsx';
+import { RouteResult } from '../features/route-comparison/RouteResult.jsx';
 import { RoutePreferences } from '../features/route-preferences/RoutePreferences.jsx';
 import { hasPreference } from '../features/route-preferences/preferenceTexts.js';
 import { useRoutePreferences } from '../features/route-preferences/useRoutePreferences.js';
@@ -186,14 +185,26 @@ export function App({ userMenu = null, user = null, onSaveTutorialStatus = null 
   }
 
   // The places of a route that is calculated go to the recent places (#180); a failed one does not.
-  async function calculateRoute(origin, destination, dateTime = solarDateTime) {
+  async function calculateRoute(
+    origin,
+    destination,
+    dateTime = solarDateTime,
+    answers = preferences
+  ) {
     setShownRoute('shaded');
     const result = await routePlanner.calculateRoute(origin, destination, {
-      routeType: chosenRouteType,
-      preferences: answersAndMinutes(preferences),
+      routeType: hasPreference(answers) ? 'shaded' : 'fastest',
+      preferences: answersAndMinutes(answers),
       ...dateTime,
     });
     if (result) routeHistory.recordPlaces([origin, destination]);
+  }
+
+  // «Probar con +N min» (PBI-19): the suggested minutes become the user's and the route is calculated
+  // again with them.
+  function trySuggestion(minutes) {
+    const answers = routePreferences.change({ extraMinutes: minutes });
+    calculateRoute(routePoints.origin, routePoints.destination, solarDateTime, answers);
   }
 
   // The answers of the route on screen: the assistant's or the user's (marked by the weather or not).
@@ -347,7 +358,9 @@ export function App({ userMenu = null, user = null, onSaveTutorialStatus = null 
                   preferences={preferences}
                   byWeather={routePreferences.byWeather}
                   weather={routePreferences.weather}
-                  isCompact={Boolean(routePlanner.fastest) && tourStep === null}
+                  // With a route the questions are the dropdown «Cambiar preferencias» of the
+                  // result, always in full.
+                  isCompact={false}
                   showExtraTimeForTour={TOUR_STEPS[tourStep]?.id === 'extra-time'}
                   loadFailed={routePreferences.loadFailed}
                   saveError={routePreferences.saveError}
@@ -359,24 +372,24 @@ export function App({ userMenu = null, user = null, onSaveTutorialStatus = null 
               solarTime={solarDateTime.time}
               onSolarDateChange={(value) => updateSolarDateTime('date', value)}
               onSolarTimeChange={(value) => updateSolarDateTime('time', value)}
-              renderComparison={(collapse) =>
-                routePlanner.comparison ? (
-                  <>
-                    <RouteComparisonPanel
-                      comparison={routePlanner.comparison}
-                      selectedRouteType={selectedRouteType}
-                      alternativeLabel={alternativeLabel}
-                      onSelectRoute={setShownRoute}
-                      {...collapse}
-                    />
-                    <ComfortSummary
-                      comparison={routePlanner.comparison}
-                      selectedRouteType={selectedRouteType}
-                      alternativeLabel={alternativeLabel}
-                      weights={routePlanner.comparison.weights}
-                      isExpanded={collapse.isExpanded}
-                    />
-                  </>
+              renderComparison={(sections) =>
+                routePlanner.comparison || routePlanner.fastest ? (
+                  <RouteResult
+                    {...sections}
+                    // Only the fastest route (every answer indifferent): the same result, alone.
+                    comparison={
+                      routePlanner.comparison ?? {
+                        status: 'fastest_only',
+                        fastest: routePlanner.fastest,
+                        shaded: null,
+                        preferences: answersAndMinutes(preferences),
+                      }
+                    }
+                    selectedRouteType={selectedRouteType}
+                    alternativeLabel={alternativeLabel}
+                    onSelectRoute={setShownRoute}
+                    onTrySuggestion={trySuggestion}
+                  />
                 ) : null
               }
             />

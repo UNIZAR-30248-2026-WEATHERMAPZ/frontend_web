@@ -130,20 +130,36 @@ test('sign up, keep the preferences, choose the points and compare the routes', 
   await expect(recentPlaces).toBeHidden();
 
   // «Según el tiempo de hoy» on again: it marks the wind again and the route of those answers is
-  // compared with the fastest one, with the minutes of the bar.
+  // compared with the fastest one, with the minutes of the bar. With a route on screen the questions
+  // are the dropdown «Cambiar preferencias» of the result (PBI-19).
+  await page.getByRole('button', { name: 'Cambiar preferencias', exact: true }).click();
   await byWeather.click();
   await expect(reason).toContainText('he marcado «Evitar el viento»');
   await expect(avoidWind).toBeChecked();
   await page.getByRole('button', { name: 'Calcular ruta', exact: true }).click();
-  const comparison = page.getByRole('region', { name: 'Comparación' });
+  // The result as in the sketches (PBI-19). With the fake routes no alternative has less wind: the
+  // fastest one is shown with the reason, and its data are under «Ver detalle».
+  const comparison = page.getByRole('region', { name: /^La más rápida · / });
   await expect(comparison).toBeVisible();
-  const fastestOption = comparison.getByRole('button', { name: /La más rápida/ });
-  await expect(fastestOption).toContainText(FASTEST_ROUTE_TEXT.duration);
-  await expect(fastestOption).toContainText(FASTEST_ROUTE_TEXT.distance);
+  await expect(comparison.getByRole('heading')).toContainText(FASTEST_ROUTE_TEXT.duration);
+  await expect(comparison.getByRole('status')).toContainText(
+    'No hay ningún camino con menos viento de cara'
+  );
+  // Both cards, in words: the second one has no alternative.
+  await expect(comparison.getByRole('button', { name: /^Más rápida/ })).toContainText(
+    /Viento\s*(Poco|Algo|Mucho)/
+  );
+  await expect(comparison.getByRole('button', { name: /^Tu ruta/ })).toContainText(
+    'Sin alternativa'
+  );
+  await comparison.getByText('Ver detalle').click();
+  const detail = comparison.getByRole('table');
+  await expect(detail).toContainText(FASTEST_ROUTE_TEXT.distance);
   // The wind exposure comes from the street segments and their openness in PostGIS: the backend
   // found the mini-dataset along the route.
-  await expect(fastestOption).toContainText(/\d+ % de exposición al viento/);
-  await expect(comparison.getByRole('button', { name: /Tu ruta/ })).toBeVisible();
+  await expect(
+    detail.getByRole('row', { name: /^Exposición al viento/ }).getByRole('cell')
+  ).toHaveText(/^\d+$/);
 
   // The assistant opens from its floating button over the map (#179): focus in the request field,
   // Escape closes it and the focus goes back to the button. Nothing is asked to the model.
